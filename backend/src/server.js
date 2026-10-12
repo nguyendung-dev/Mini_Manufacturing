@@ -6,7 +6,13 @@ const { initDatabase } = require('./init-db');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors());
+// CORS configuration for Coolify domains
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Request logger
@@ -38,23 +44,33 @@ app.use('/api/costings', costingRoutes);
 app.use('/api/reports', reportRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Mini Manufacturing ERP Backend is running' });
+  res.json({
+    status: 'OK',
+    message: 'Mini Manufacturing ERP Backend is running',
+    timestamp: new Date().toISOString(),
+    db_host: process.env.DB_HOST || 'localhost',
+    port: PORT
+  });
 });
 
-// Start Server
-async function startServer() {
-  try {
-    await initDatabase();
-    app.listen(PORT, () => {
-      console.log(`===============================================`);
-      console.log(` Mini Manufacturing ERP Backend running on:`);
-      console.log(` http://localhost:${PORT}`);
-      console.log(` Connected to MySQL (Laragon): localhost:3306`);
-      console.log(`===============================================`);
+// Start Server (Bind to 0.0.0.0 for Docker container routing)
+function startServer() {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`===============================================`);
+    console.log(` Mini Manufacturing ERP Backend running on:`);
+    console.log(` Port: ${PORT} (0.0.0.0)`);
+    console.log(` Connected to MySQL: ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306}`);
+    console.log(`===============================================`);
+  });
+
+  // Run database initialization in background
+  initDatabase()
+    .then(() => {
+      console.log('Database and seed tables verified successfully.');
+    })
+    .catch((err) => {
+      console.error('Warning: Database initialization failed:', err.message);
     });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-  }
 }
 
 startServer();
