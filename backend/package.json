@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "init-db": "node src/init-db.js",
     "dev": "node --watch src/server.js"
   },
   "dependencies": {
