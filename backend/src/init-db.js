@@ -1,3 +1,8 @@
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
@@ -14,7 +19,8 @@ async function initDatabase() {
       host: DB_HOST,
       user: DB_USER,
       password: DB_PASSWORD,
-      port: DB_PORT
+      port: DB_PORT,
+      family: 4
     });
     await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
     console.log(`Database "${DB_NAME}" checked/created.`);
@@ -29,6 +35,7 @@ async function initDatabase() {
     password: DB_PASSWORD,
     port: DB_PORT,
     database: DB_NAME,
+    family: 4,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
