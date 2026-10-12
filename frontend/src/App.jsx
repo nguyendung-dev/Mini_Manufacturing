@@ -219,25 +219,25 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans antialiased text-slate-800 overflow-hidden">
-      {/* SIDEBAR BÊN TRÁI: Chuẩn Navy Doanh nghiệp (#0f172a), Gọn gàng, Chữ to rõ nét */}
+    <div className="flex h-screen bg-zinc-50/60 font-sans antialiased text-zinc-950 overflow-hidden">
+      {/* SIDEBAR BÊN TRÁI: Chuẩn shadcn/ui (Nền trắng, border-zinc-200, menu active zinc-900) */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-18 min-w-[72px] max-w-[72px]' : 'w-72 min-w-[288px] max-w-[288px]'
-        } bg-[#0f172a] text-slate-300 flex flex-col flex-shrink-0 transition-all duration-150 select-none border-r border-slate-800`}
+          sidebarCollapsed ? 'w-18 min-w-[72px] max-w-[72px]' : 'w-64 min-w-[256px] max-w-[256px]'
+        } bg-white text-zinc-900 flex flex-col flex-shrink-0 transition-all duration-150 select-none border-r border-zinc-200`}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center px-4.5 border-b border-slate-800 bg-[#0b1120]">
+        <div className="h-14 flex items-center px-4 border-b border-zinc-200 bg-white">
           <div className="flex items-center gap-3 overflow-hidden w-full">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+            <div className="w-7 h-7 rounded-md bg-zinc-900 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">
               VN
             </div>
             {!sidebarCollapsed && (
               <div className="leading-tight truncate flex-1">
-                <div className="font-bold text-sm text-white tracking-wide uppercase truncate">
-                  VINATECH ERP
+                <div className="font-semibold text-sm text-zinc-950 tracking-tight truncate">
+                  VinaTech ERP
                 </div>
-                <div className="text-xs text-slate-400 font-medium truncate">
+                <div className="text-[11px] text-zinc-500 font-normal truncate">
                   Quản Trị Sản Xuất
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function App() {
         </div>
 
         {/* Danh sách Menu Modules */}
-        <nav className="flex-1 overflow-y-auto py-3.5 space-y-4">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
           {menuGroups.map(group => {
             const allowedItems = group.items.filter(item => {
               const hasPerm = permissions[item.permKey];
@@ -263,11 +263,11 @@ export default function App() {
               <div key={group.key} className="space-y-1">
                 {/* Header Phân hệ */}
                 {!sidebarCollapsed ? (
-                  <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                     {group.title}
                   </div>
                 ) : (
-                  <div className="w-8 border-b border-slate-800 mx-auto my-2" />
+                  <div className="w-6 border-b border-zinc-200 mx-auto my-1.5" />
                 )}
 
                 {/* Danh sách mục */}
@@ -279,11 +279,11 @@ export default function App() {
                         key={item.id}
                         onClick={() => setActiveModule(item.id)}
                         title={item.label}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                           isActive
-                            ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        } ${sidebarCollapsed ? 'justify-center px-0' : 'px-4'}`}
+                            ? 'bg-zinc-900 text-zinc-50 shadow-sm font-medium'
+                            : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                        } ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                       >
                         <span className="flex-shrink-0">{item.icon}</span>
                         {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
@@ -296,12 +296,12 @@ export default function App() {
           })}
         </nav>
 
-        {/* Chân Sidebar: Nút Thu Gọn Menu */}
-        <div className="p-2.5 border-t border-slate-800 bg-[#0b1120]">
+        {/* Chân Sidebar: Nút Thu Gọn Menu chuẩn shadcn/ui Ghost Button */}
+        <div className="p-3 border-t border-zinc-200 bg-white">
           <button
             type="button"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full py-2 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded transition-colors text-sm font-medium"
+            className="w-full h-8 flex items-center justify-center gap-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 border border-zinc-200 rounded-md transition-colors text-xs font-medium shadow-sm"
             title={sidebarCollapsed ? 'Mở rộng thanh menu' : 'Thu gọn thanh menu'}
           >
             <svg
@@ -312,59 +312,57 @@ export default function App() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
-            {!sidebarCollapsed && <span>Thu gọn thanh điều hướng</span>}
+            {!sidebarCollapsed && <span>Thu gọn</span>}
           </button>
         </div>
       </aside>
 
       {/* KHU VỰC CHÍNH BÊN PHẢI */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* HEADER TRÊN CÙNG: Nền trắng tinh khiết, chuẩn mực phần mềm quản trị */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
+        {/* HEADER TRÊN CÙNG: Nền trắng tinh khiết, chuẩn shadcn/ui */}
+        <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
           {/* Breadcrumb vị trí hiện tại */}
-          <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-            <span className="text-slate-400 font-normal">Hệ thống /</span>
-            <span className="text-slate-900 font-semibold">{currentBreadcrumb}</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
+            <span className="text-zinc-400 font-normal">Hệ thống /</span>
+            <span className="text-zinc-900 font-semibold">{currentBreadcrumb}</span>
           </div>
 
-          {/* Góc phải: Trạng thái máy chủ, Thông báo & Thông tin tài khoản */}
-          <div className="flex items-center gap-4 text-xs">
-
+          {/* Góc phải: Thông tin tài khoản */}
+          <div className="flex items-center gap-3 text-xs">
             {/* Tài khoản Người dùng */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 px-2.5 py-1 rounded hover:bg-slate-100 text-slate-700 transition-colors"
+                className="h-8 px-2.5 rounded-md border border-zinc-200 bg-white hover:bg-zinc-50 flex items-center gap-2 text-xs font-medium text-zinc-800 shadow-sm transition-colors"
               >
-                <div className="w-7 h-7 rounded bg-slate-800 text-white font-bold flex items-center justify-center text-xs">
+                <div className="w-5 h-5 rounded-full bg-zinc-900 text-white font-bold flex items-center justify-center text-[10px]">
                   {currentUser.username ? currentUser.username[0].toUpperCase() : 'U'}
                 </div>
                 <div className="text-left leading-tight hidden sm:block">
-                  <div className="font-semibold text-slate-900 text-xs">{currentUser.full_name}</div>
-                  <div className="text-[10px] text-slate-500">{currentUser.role}</div>
+                  <span className="font-medium text-zinc-900 text-xs">{currentUser.full_name}</span>
                 </div>
-                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               {/* Menu Đăng xuất */}
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded shadow-lg py-1 z-50">
-                  <div className="px-3 py-2 border-b border-slate-100 text-xs">
-                    <div className="font-semibold text-slate-800">{currentUser.full_name}</div>
-                    <div className="text-[10px] text-slate-500 font-mono">@{currentUser.username} ({currentUser.role})</div>
+                <div className="absolute right-0 mt-1 w-48 bg-white border border-zinc-200 rounded-md shadow-md p-1 z-50">
+                  <div className="px-3 py-2 border-b border-zinc-100 text-xs">
+                    <div className="font-semibold text-zinc-900">{currentUser.full_name}</div>
+                    <div className="text-[10px] text-zinc-500 font-mono">@{currentUser.username} ({currentUser.role})</div>
                   </div>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"
+                    className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded flex items-center gap-2 font-medium transition-colors"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span>Đăng xuất hệ thống</span>
+                    <span>Đăng xuất</span>
                   </button>
                 </div>
               )}
@@ -373,7 +371,7 @@ export default function App() {
         </header>
 
         {/* KHÔNG GIAN NỘI DUNG CHÍNH (NỀN SÁNG, DỄ ĐỌC SỐ LIỆU) */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-100">
+        <main className="flex-1 overflow-y-auto p-6 bg-zinc-50/70">
           <div className="max-w-7xl mx-auto">
             {activeModule === 'dashboard' && <DashboardView onNavigate={(mod) => setActiveModule(mod)} />}
             {activeModule === 'catalog' && <CatalogView />}
