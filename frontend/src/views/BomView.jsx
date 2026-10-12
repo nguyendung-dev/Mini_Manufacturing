@@ -1,0 +1,453 @@
+import React, { useState, useEffect } from 'react';
+import { fetchApi, formatMoney, formatNumber } from '../api';
+
+export default function BomView() {
+  const [boms, setBoms] = useState([]);
+  const [items, setItems] = useState([]);
+  const [selectedBom, setSelectedBom] = useState(null);
+  const [planQty, setPlanQty] = useState(10);
+  const [mrpResult, setMrpResult] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Form tạo BOM
+  const [bomForm, setBomForm] = useState({
+    code: '',
+    name: '',
+    target_item_id: '',
+    version: '1.0',
+    standard_qty: 1,
+    notes: '',
+    components: [{ item_id: '', qty: 1, scrap_rate: 0, note: '' }]
+  });
+
+  const loadData = async () => {
+    try {
+      const bList = await fetchApi('/boms');
+      setBoms(bList);
+      if (bList.length > 0 && !selectedBom) {
+        setSelectedBom(bList[0]);
+      }
+      const itms = await fetchApi('/catalog/items');
+      setItems(itms);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Tính nhu cầu vật tư (MRP) khi thay đổi số lượng hoặc chọn BOM
+  const handleCalculateRequirement = async (bomId, qty) => {
+    try {
+      const res = await fetchApi(`/boms/${bomId}/calculate-requirement`, {
+        method: 'POST',
+        body: JSON.stringify({ plannedQty: qty })
+      });
+      setMrpResult(res);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedBom) {
+      handleCalculateRequirement(selectedBom.id, planQty);
+    }
+  }, [selectedBom, planQty]);
+
+  const addCompLine = () => {
+    setBomForm({
+      ...bomForm,
+      components: [...bomForm.components, { item_id: '', qty: 1, scrap_rate: 0, note: '' }]
+    });
+  };
+
+  const removeCompLine = (idx) => {
+    if (bomForm.components.length <= 1) return;
+    setBomForm({
+      ...bomForm,
+      components: bomForm.components.filter((_, i) => i !== idx)
+    });
+  };
+
+  const handleSaveBom = async (e) => {
+    e.preventDefault();
+    try {
+      await fetchApi('/boms', {
+        method: 'POST',
+        body: JSON.stringify(bomForm)
+      });
+      alert('Tạo định mức BOM thành công!');
+      setShowCreateModal(false);
+      setBomForm({
+        code: '',
+        name: '',
+        target_item_id: '',
+        version: '1.0',
+        standard_qty: 1,
+        notes: '',
+        components: [{ item_id: '', qty: 1, scrap_rate: 0, note: '' }]
+      });
+      loadData();
+    } catch (err) {
+      alert(`Lỗi: ${err.message}`);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">Module 03: Định mức vật tư (BOM) & Tính nhu cầu</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Thiết lập BOM đa cấp cho Thành phẩm/Bán thành phẩm, hỗ trợ tỷ lệ hao hụt và tính nhu cầu NVL
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
+        >
+          + Tạo định mức BOM mới
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Danh sách BOMs bên trái (4 cols) */}
+        <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Danh sách định mức đã duyệt</h3>
+          <div className="space-y-2">
+            {boms.map(b => (
+              <div
+                key={b.id}
+                onClick={() => setSelectedBom(b)}
+                className={`p-3 rounded border cursor-pointer transition-colors ${
+                  selectedBom?.id === b.id
+                    ? 'border-blue-700 bg-blue-50/50'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="font-mono text-xs font-bold text-blue-700">{b.code}</div>
+                  <span className="text-xs bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-semibold">
+                    v{b.version}
+                  </span>
+                </div>
+                <div className="font-semibold text-slate-800 text-sm mt-1">{b.name}</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Mục tiêu: <strong>{b.target_item_name}</strong>
+                </div>
+                <div className="text-xs text-slate-600 mt-2 flex justify-between border-t border-slate-100 pt-1.5">
+                  <span>Số linh kiện: {b.components?.length || 0}</span>
+                  <span>Ước tính: <strong className="text-emerald-700">{formatMoney(b.estimatedCost)}</strong></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chi tiết BOM & Máy tính nhu cầu vật tư MRP (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          {selectedBom && (
+            <>
+              {/* Chi tiết thành phần cấu thành */}
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Chi tiết cấu thành BOM: <span className="text-blue-700">{selectedBom.name}</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Định mức tính cho <strong>{selectedBom.standard_qty} {selectedBom.target_item_unit}</strong> thành phẩm
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-slate-500">Giá thành kế hoạch chuẩn</div>
+                    <div className="text-sm font-bold text-emerald-700">{formatMoney(selectedBom.estimatedCost)}</div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
+                      <tr>
+                        <th className="p-2.5">Linh kiện / NVL</th>
+                        <th className="p-2.5 text-right">Định mức</th>
+                        <th className="p-2.5 text-right">Hao hụt (%)</th>
+                        <th className="p-2.5 text-right">Đơn giá vốn</th>
+                        <th className="p-2.5 text-right">Thành tiền</th>
+                        <th className="p-2.5">Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {selectedBom.components?.map((c, i) => {
+                        const totalReqUnit = Number(c.qty) * (1 + Number(c.scrap_rate || 0) / 100);
+                        const cost = totalReqUnit * Number(c.cost_price || 0);
+                        return (
+                          <tr key={i} className="hover:bg-slate-50">
+                            <td className="p-2.5">
+                              <div className="font-medium text-slate-800">{c.item_name}</div>
+                              <div className="text-xs text-slate-500 font-mono">{c.item_code}</div>
+                            </td>
+                            <td className="p-2.5 text-right font-medium">
+                              {formatNumber(c.qty)} {c.item_unit}
+                            </td>
+                            <td className="p-2.5 text-right text-slate-600 font-medium">
+                              {c.scrap_rate}%
+                            </td>
+                            <td className="p-2.5 text-right text-slate-600">
+                              {formatMoney(c.cost_price)}
+                            </td>
+                            <td className="p-2.5 text-right font-bold text-slate-800">
+                              {formatMoney(cost)}
+                            </td>
+                            <td className="p-2.5 text-xs text-slate-500">{c.note || '-'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Công cụ tính toán nhu cầu vật tư MRP theo quy mô sản xuất */}
+              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                      Công cụ tính nhu cầu vật tư (MRP Kế hoạch)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Nhập số lượng cần sản xuất để hệ thống đối chiếu với kho và cảnh báo thiếu hàng
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-semibold text-slate-700">Số lượng cần SX:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={planQty}
+                      onChange={(e) => setPlanQty(Math.max(1, Number(e.target.value)))}
+                      className="w-20 text-sm font-bold border border-slate-300 rounded px-2.5 py-1 text-right focus:outline-none focus:border-blue-600"
+                    />
+                    <span className="text-xs text-slate-600 font-medium">{selectedBom.target_item_unit}</span>
+                  </div>
+                </div>
+
+                {mrpResult && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
+                        <tr>
+                          <th className="p-2.5">Vật tư cần dùng</th>
+                          <th className="p-2.5 text-right">Định mức/SP</th>
+                          <th className="p-2.5 text-right">Tổng nhu cầu (+Hao hụt)</th>
+                          <th className="p-2.5 text-right">Tồn kho hiện có</th>
+                          <th className="p-2.5 text-right">Cần mua thêm (Thiếu)</th>
+                          <th className="p-2.5 text-center">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {mrpResult.requirements?.map((req, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50">
+                            <td className="p-2.5">
+                              <div className="font-medium text-slate-800">{req.itemName}</div>
+                              <div className="text-xs text-slate-500 font-mono">{req.itemCode}</div>
+                            </td>
+                            <td className="p-2.5 text-right text-slate-600">
+                              {formatNumber(req.standardQty)} {req.unit}
+                            </td>
+                            <td className="p-2.5 text-right font-bold text-slate-800">
+                              {formatNumber(req.totalRequired)} {req.unit}
+                            </td>
+                            <td className="p-2.5 text-right font-semibold text-blue-700">
+                              {formatNumber(req.currentStock)} {req.unit}
+                            </td>
+                            <td className={`p-2.5 text-right font-bold ${req.shortage > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                              {req.shortage > 0 ? `${formatNumber(req.shortage)} ${req.unit}` : '0'}
+                            </td>
+                            <td className="p-2.5 text-center">
+                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                                req.status === 'ĐỦ_HÀNG' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                              }`}>
+                                {req.status === 'ĐỦ_HÀNG' ? 'Đủ vật tư' : 'Thiếu hàng'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Modal Tạo mới BOM */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 shadow-xl space-y-4 my-8">
+            <h3 className="text-lg font-bold text-slate-800 border-b pb-2">
+              Tạo mới định mức BOM sản phẩm
+            </h3>
+
+            <form onSubmit={handleSaveBom} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Mã BOM (*)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: BOM-TP-01-V1"
+                    value={bomForm.code}
+                    onChange={(e) => setBomForm({ ...bomForm, code: e.target.value })}
+                    className="w-full text-sm border p-2 rounded focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Phiên bản</label>
+                  <input
+                    type="text"
+                    value={bomForm.version}
+                    onChange={(e) => setBomForm({ ...bomForm, version: e.target.value })}
+                    className="w-full text-sm border p-2 rounded focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tên định mức (*)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Định mức Vỏ tủ 400x600"
+                    value={bomForm.name}
+                    onChange={(e) => setBomForm({ ...bomForm, name: e.target.value })}
+                    className="w-full text-sm border p-2 rounded focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Sản phẩm đích (*)</label>
+                  <select
+                    required
+                    value={bomForm.target_item_id}
+                    onChange={(e) => setBomForm({ ...bomForm, target_item_id: e.target.value })}
+                    className="w-full text-sm border p-2 rounded focus:outline-none"
+                  >
+                    <option value="">-- Chọn BTP hoặc TP --</option>
+                    {items.filter(i => ['BTP', 'TP'].includes(i.type)).map(it => (
+                      <option key={it.id} value={it.id}>[{it.type}] {it.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Danh sách linh kiện trong BOM */}
+              <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-bold uppercase text-slate-700">Linh kiện cấu thành & Tỷ lệ hao hụt</span>
+                  <button
+                    type="button"
+                    onClick={addCompLine}
+                    className="text-xs text-blue-700 font-semibold hover:underline"
+                  >
+                    + Thêm linh kiện
+                  </button>
+                </div>
+
+                {bomForm.components.map((comp, idx) => (
+                  <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2 rounded border border-slate-200">
+                    <div className="sm:col-span-5">
+                      <select
+                        required
+                        value={comp.item_id}
+                        onChange={(e) => {
+                          const newComps = [...bomForm.components];
+                          newComps[idx].item_id = e.target.value;
+                          setBomForm({ ...bomForm, components: newComps });
+                        }}
+                        className="w-full text-xs border p-1.5 rounded focus:outline-none"
+                      >
+                        <option value="">-- Chọn NVL hoặc BTP con --</option>
+                        {items.map(it => (
+                          <option key={it.id} value={it.id}>[{it.type}] {it.name} ({it.unit})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <input
+                        type="number"
+                        min="0.0001"
+                        step="any"
+                        placeholder="Số lượng định mức"
+                        required
+                        value={comp.qty}
+                        onChange={(e) => {
+                          const newComps = [...bomForm.components];
+                          newComps[idx].qty = Number(e.target.value);
+                          setBomForm({ ...bomForm, components: newComps });
+                        }}
+                        className="w-full text-xs border p-1.5 rounded text-right focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="Hao hụt %"
+                          value={comp.scrap_rate}
+                          onChange={(e) => {
+                            const newComps = [...bomForm.components];
+                            newComps[idx].scrap_rate = Number(e.target.value);
+                            setBomForm({ ...bomForm, components: newComps });
+                          }}
+                          className="w-full text-xs border p-1.5 rounded text-right focus:outline-none"
+                        />
+                        <span className="text-xs text-slate-500 font-semibold">%</span>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeCompLine(idx)}
+                        className="text-rose-600 hover:text-rose-800 text-xs font-bold"
+                      >
+                        X
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border rounded text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-700 text-white rounded text-sm font-semibold hover:bg-blue-800"
+                >
+                  Lưu định mức BOM
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

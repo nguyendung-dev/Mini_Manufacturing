@@ -1,0 +1,388 @@
+{
+  "categories": [
+    { "id": "CAT-01", "name": "Thép & Kim loại tấm", "type": "NVL" },
+    { "id": "CAT-02", "name": "Hóa chất & Sơn", "type": "NVL" },
+    { "id": "CAT-03", "name": "Phụ kiện cơ khí", "type": "NVL" },
+    { "id": "CAT-04", "name": "Bán thành phẩm gia công", "type": "BTP" },
+    { "id": "CAT-05", "name": "Tủ bảng điện hoàn chỉnh", "type": "TP" }
+  ],
+  "warehouses": [
+    { "id": "WH-NVL", "code": "KHO-NVL", "name": "Kho Nguyên Vật Liệu", "type": "NVL", "location": "Khu A - Tầng 1" },
+    { "id": "WH-BTP", "code": "KHO-BTP", "name": "Kho Bán Thành Phẩm", "type": "BTP", "location": "Khu B - Giữa xưởng" },
+    { "id": "WH-TP", "code": "KHO-TP", "name": "Kho Thành Phẩm", "type": "TP", "location": "Khu C - Cạnh cổng xuất" },
+    { "id": "WH-SX", "code": "KHO-SX", "name": "Kho Đệm Sản Xuất (Line SX)", "type": "SX", "location": "Khu vực máy dập chấn & lắp ráp" }
+  ],
+  "items": [
+    {
+      "id": "ITEM-NVL-01",
+      "code": "NVL-THEP-15",
+      "name": "Thép Tấm SS400 1.5mm (1200x2400)",
+      "type": "NVL",
+      "categoryId": "CAT-01",
+      "unit": "Kg",
+      "costPrice": 22000,
+      "salePrice": 0,
+      "minStock": 300
+    },
+    {
+      "id": "ITEM-NVL-02",
+      "code": "NVL-SON-XAM",
+      "name": "Bột Sơn Tĩnh Điện Xám Sần RAL 7035",
+      "type": "NVL",
+      "categoryId": "CAT-02",
+      "unit": "Kg",
+      "costPrice": 65000,
+      "salePrice": 0,
+      "minStock": 50
+    },
+    {
+      "id": "ITEM-NVL-03",
+      "code": "NVL-BULONG-M6",
+      "name": "Bulong + Tán M6 Inox 304",
+      "type": "NVL",
+      "categoryId": "CAT-03",
+      "unit": "Con",
+      "costPrice": 1200,
+      "salePrice": 0,
+      "minStock": 1000
+    },
+    {
+      "id": "ITEM-NVL-04",
+      "code": "NVL-KHOA-MS",
+      "name": "Khóa Bật Tay Gạt Tủ Điện MS818",
+      "type": "NVL",
+      "categoryId": "CAT-03",
+      "unit": "Bộ",
+      "costPrice": 32000,
+      "salePrice": 0,
+      "minStock": 50
+    },
+    {
+      "id": "ITEM-BTP-01",
+      "code": "BTP-KHUNG-4060",
+      "name": "Khung Thân Tủ 400x600 (Đã Cắt Chấn)",
+      "type": "BTP",
+      "categoryId": "CAT-04",
+      "unit": "Cái",
+      "costPrice": 145000,
+      "salePrice": 0,
+      "minStock": 10
+    },
+    {
+      "id": "ITEM-BTP-02",
+      "code": "BTP-CANH-4060",
+      "name": "Cánh Tủ 400x600 (Đã Đột Lỗ Đèn Báo)",
+      "type": "BTP",
+      "categoryId": "CAT-04",
+      "unit": "Cái",
+      "costPrice": 62000,
+      "salePrice": 0,
+      "minStock": 10
+    },
+    {
+      "id": "ITEM-TP-01",
+      "code": "TP-TU-406020",
+      "name": "Vỏ Tủ Điện Trong Nhà 400x600x200mm",
+      "type": "TP",
+      "categoryId": "CAT-05",
+      "unit": "Chiếc",
+      "costPrice": 298000,
+      "salePrice": 480000,
+      "minStock": 5
+    },
+    {
+      "id": "ITEM-TP-02",
+      "code": "TP-TU-507025",
+      "name": "Vỏ Tủ Điện Ngoài Trời Mái Che 500x700x250mm",
+      "type": "TP",
+      "categoryId": "CAT-05",
+      "unit": "Chiếc",
+      "costPrice": 420000,
+      "salePrice": 690000,
+      "minStock": 3
+    }
+  ],
+  "stock": [
+    { "id": "STK-01", "warehouseId": "WH-NVL", "itemId": "ITEM-NVL-01", "lotNumber": "LOT-THEP-202610A", "quantity": 850 },
+    { "id": "STK-02", "warehouseId": "WH-NVL", "itemId": "ITEM-NVL-02", "lotNumber": "LOT-SON-202610", "quantity": 120 },
+    { "id": "STK-03", "warehouseId": "WH-NVL", "itemId": "ITEM-NVL-03", "lotNumber": "LOT-BL-202609", "quantity": 2500 },
+    { "id": "STK-04", "warehouseId": "WH-NVL", "itemId": "ITEM-NVL-04", "lotNumber": "LOT-KH-202609", "quantity": 80 },
+    { "id": "STK-05", "warehouseId": "WH-BTP", "itemId": "ITEM-BTP-01", "lotNumber": "LOT-BTP-202610-01", "quantity": 25 },
+    { "id": "STK-06", "warehouseId": "WH-BTP", "itemId": "ITEM-BTP-02", "lotNumber": "LOT-BTP-202610-02", "quantity": 20 },
+    { "id": "STK-07", "warehouseId": "WH-TP", "itemId": "ITEM-TP-01", "lotNumber": "LOT-TP-202610-01", "quantity": 12 },
+    { "id": "STK-08", "warehouseId": "WH-TP", "itemId": "ITEM-TP-02", "lotNumber": "LOT-TP-202610-02", "quantity": 6 },
+    { "id": "STK-09", "warehouseId": "WH-SX", "itemId": "ITEM-NVL-01", "lotNumber": "LOT-THEP-202610A", "quantity": 55 }
+  ],
+  "boms": [
+    {
+      "id": "BOM-01",
+      "code": "BOM-TP-406020-V1",
+      "name": "BOM Vỏ Tủ Điện Trong Nhà 400x600x200 (V1.0)",
+      "targetItemId": "ITEM-TP-01",
+      "version": "1.0",
+      "standardQty": 1,
+      "notes": "Định mức tiêu chuẩn cho 1 vỏ tủ hoàn thiện",
+      "components": [
+        { "itemId": "ITEM-BTP-01", "qty": 1, "scrapRate": 0, "note": "Khung thân tủ" },
+        { "itemId": "ITEM-BTP-02", "qty": 1, "scrapRate": 0, "note": "Cánh tủ" },
+        { "itemId": "ITEM-NVL-02", "qty": 1.2, "scrapRate": 5, "note": "Sơn tĩnh điện (bao gồm hao hụt)" },
+        { "itemId": "ITEM-NVL-03", "qty": 16, "scrapRate": 2, "note": "Bulong ốc vít" },
+        { "itemId": "ITEM-NVL-04", "qty": 2, "scrapRate": 0, "note": "Khóa gạt MS818" }
+      ]
+    },
+    {
+      "id": "BOM-02",
+      "code": "BOM-BTP-KHUNG-V1",
+      "name": "BOM Khung Thân Tủ 400x600 (V1.0)",
+      "targetItemId": "ITEM-BTP-01",
+      "version": "1.0",
+      "standardQty": 1,
+      "notes": "Định mức cắt chấn thép tấm",
+      "components": [
+        { "itemId": "ITEM-NVL-01", "qty": 5.2, "scrapRate": 3, "note": "Thép tấm 1.5mm tính cả hao hụt mạt cắt" }
+      ]
+    },
+    {
+      "id": "BOM-03",
+      "code": "BOM-BTP-CANH-V1",
+      "name": "BOM Cánh Tủ 400x600 (V1.0)",
+      "targetItemId": "ITEM-BTP-02",
+      "version": "1.0",
+      "standardQty": 1,
+      "notes": "Định mức dập chấn đột lỗ cánh",
+      "components": [
+        { "itemId": "ITEM-NVL-01", "qty": 2.1, "scrapRate": 2, "note": "Thép tấm 1.5mm" }
+      ]
+    }
+  ],
+  "productionOrders": [
+    {
+      "id": "LSX-202610-001",
+      "code": "LSX-202610-001",
+      "date": "2026-10-10",
+      "targetItemId": "ITEM-TP-01",
+      "bomId": "BOM-01",
+      "plannedQty": 20,
+      "actualQty": 12,
+      "defectiveQty": 1,
+      "lotNumber": "LOT-TP-202610-01",
+      "warehouseId": "WH-TP",
+      "status": "IN_PROGRESS",
+      "notes": "Sản xuất giao đơn hàng khách ME Tân Bình",
+      "stages": [
+        { "name": "Cắt & Chấn khung/cánh", "order": 1, "status": "COMPLETED", "completedQty": 20 },
+        { "name": "Sơn tĩnh điện sấy nhiệt", "order": 2, "status": "COMPLETED", "completedQty": 18 },
+        { "name": "Lắp ráp phụ kiện & Đóng gói", "order": 3, "status": "IN_PROGRESS", "completedQty": 12 }
+      ],
+      "materialAllocations": [
+        { "itemId": "ITEM-BTP-01", "plannedQty": 20, "allocatedQty": 20, "actualUsedQty": 20, "lotNumber": "LOT-BTP-202610-01" },
+        { "itemId": "ITEM-BTP-02", "plannedQty": 20, "allocatedQty": 20, "actualUsedQty": 20, "lotNumber": "LOT-BTP-202610-02" },
+        { "itemId": "ITEM-NVL-02", "plannedQty": 25.2, "allocatedQty": 26, "actualUsedQty": 25, "lotNumber": "LOT-SON-202610" },
+        { "itemId": "ITEM-NVL-03", "plannedQty": 326.4, "allocatedQty": 330, "actualUsedQty": 250, "lotNumber": "LOT-BL-202609" },
+        { "itemId": "ITEM-NVL-04", "plannedQty": 40, "allocatedQty": 40, "actualUsedQty": 24, "lotNumber": "LOT-KH-202609" }
+      ]
+    },
+    {
+      "id": "LSX-202610-002",
+      "code": "LSX-202610-002",
+      "date": "2026-10-05",
+      "targetItemId": "ITEM-BTP-01",
+      "bomId": "BOM-02",
+      "plannedQty": 30,
+      "actualQty": 30,
+      "defectiveQty": 0,
+      "lotNumber": "LOT-BTP-202610-01",
+      "warehouseId": "WH-BTP",
+      "status": "COMPLETED",
+      "notes": "Gia công sẵn BTP khung thân tủ",
+      "stages": [
+        { "name": "Xả phôi & Cắt CNC", "order": 1, "status": "COMPLETED", "completedQty": 30 },
+        { "name": "Chấn gập cạnh khung", "order": 2, "status": "COMPLETED", "completedQty": 30 },
+        { "name": "Hàn đính & Mài góc", "order": 3, "status": "COMPLETED", "completedQty": 30 }
+      ],
+      "materialAllocations": [
+        { "itemId": "ITEM-NVL-01", "plannedQty": 160.68, "allocatedQty": 161, "actualUsedQty": 161, "lotNumber": "LOT-THEP-202610A" }
+      ]
+    }
+  ],
+  "stockTransactions": [
+    {
+      "id": "ST-01",
+      "code": "PNK-202610-001",
+      "date": "2026-10-02",
+      "type": "IN_PURCHASE",
+      "status": "POSTED",
+      "sourceWarehouseId": null,
+      "destWarehouseId": "WH-NVL",
+      "partnerId": "PARTNER-01",
+      "refCode": "PO-202610-01",
+      "note": "Nhập kho thép tấm SS400 từ Hòa Phát",
+      "items": [
+        { "itemId": "ITEM-NVL-01", "lotNumber": "LOT-THEP-202610A", "qty": 1000, "price": 22000 }
+      ]
+    },
+    {
+      "id": "ST-02",
+      "code": "PXK-202610-001",
+      "date": "2026-10-05",
+      "type": "TRANSFER",
+      "status": "POSTED",
+      "sourceWarehouseId": "WH-NVL",
+      "destWarehouseId": "WH-SX",
+      "refCode": "LSX-202610-002",
+      "note": "Cấp phát thép ra line sản xuất theo LSX-202610-002",
+      "items": [
+        { "itemId": "ITEM-NVL-01", "lotNumber": "LOT-THEP-202610A", "qty": 161, "price": 22000 }
+      ]
+    },
+    {
+      "id": "ST-03",
+      "code": "PNK-202610-002",
+      "date": "2026-10-07",
+      "type": "IN_PRODUCTION",
+      "status": "POSTED",
+      "sourceWarehouseId": "WH-SX",
+      "destWarehouseId": "WH-BTP",
+      "refCode": "LSX-202610-002",
+      "note": "Nhập kho BTP hoàn thành từ LSX-202610-002",
+      "items": [
+        { "itemId": "ITEM-BTP-01", "lotNumber": "LOT-BTP-202610-01", "qty": 30, "price": 145000 }
+      ]
+    }
+  ],
+  "partners": [
+    {
+      "id": "PARTNER-01",
+      "code": "NCC-HOAPHAT",
+      "name": "Công Ty Cổ Phần Thép Hòa Phát",
+      "type": "SUPPLIER",
+      "phone": "0243.987.6543",
+      "address": "KCN Phố Nối A, Hưng Yên",
+      "debt": 12000000
+    },
+    {
+      "id": "PARTNER-02",
+      "code": "NCC-AKZO",
+      "name": "Công Ty TNHH Sơn AkzoNobel Việt Nam",
+      "type": "SUPPLIER",
+      "phone": "0283.829.1122",
+      "address": "KCN Amata, Đồng Nai",
+      "debt": 4500000
+    },
+    {
+      "id": "PARTNER-03",
+      "code": "KH-METANBINH",
+      "name": "Công Ty TNHH Cơ Điện & Chiếu Sáng Tân Bình",
+      "type": "CUSTOMER",
+      "phone": "0903.123.456",
+      "address": "45 Trường Chinh, Q. Tân Bình, TP.HCM",
+      "debt": 7200000
+    },
+    {
+      "id": "PARTNER-04",
+      "code": "KH-DIENLUC",
+      "name": "Xí Nghiệp Xây Lắp Điện Lực Miền Nam",
+      "type": "CUSTOMER",
+      "phone": "0912.888.999",
+      "address": "Số 10 Nguyễn Huệ, Quận 1, TP.HCM",
+      "debt": 0
+    }
+  ],
+  "purchaseOrders": [
+    {
+      "id": "PO-202610-01",
+      "code": "PO-202610-01",
+      "date": "2026-10-01",
+      "partnerId": "PARTNER-01",
+      "status": "RECEIVED",
+      "totalAmount": 22000000,
+      "paidAmount": 10000000,
+      "items": [
+        { "itemId": "ITEM-NVL-01", "qty": 1000, "receivedQty": 1000, "unitPrice": 22000, "amount": 22000000 }
+      ],
+      "notes": "Đơn đặt mua thép tấm chuẩn bị cho sản xuất tháng 10"
+    },
+    {
+      "id": "PO-202610-02",
+      "code": "PO-202610-02",
+      "date": "2026-10-08",
+      "partnerId": "PARTNER-02",
+      "status": "CONFIRMED",
+      "totalAmount": 6500000,
+      "paidAmount": 2000000,
+      "items": [
+        { "itemId": "ITEM-NVL-02", "qty": 100, "receivedQty": 0, "unitPrice": 65000, "amount": 6500000 }
+      ],
+      "notes": "Đặt thêm bột sơn tĩnh điện màu xám sần"
+    }
+  ],
+  "salesOrders": [
+    {
+      "id": "SO-202610-01",
+      "code": "SO-202610-01",
+      "date": "2026-10-09",
+      "partnerId": "PARTNER-03",
+      "status": "CONFIRMED",
+      "totalAmount": 9600000,
+      "paidAmount": 2400000,
+      "items": [
+        { "itemId": "ITEM-TP-01", "qty": 20, "deliveredQty": 0, "unitPrice": 480000, "amount": 9600000 }
+      ],
+      "notes": "Hợp đồng cấp vỏ tủ cho công trình trạm biến áp Tân Bình"
+    }
+  ],
+  "cashReceipts": [
+    {
+      "id": "PT-202610-01",
+      "code": "PT-202610-01",
+      "date": "2026-10-09",
+      "partnerId": "PARTNER-03",
+      "type": "SALE",
+      "paymentMethod": "BANK",
+      "amount": 2400000,
+      "refCode": "SO-202610-01",
+      "note": "Thu tạm ứng 25% giá trị đơn hàng SO-202610-01"
+    }
+  ],
+  "cashPayments": [
+    {
+      "id": "PC-202610-01",
+      "code": "PC-202610-01",
+      "date": "2026-10-03",
+      "partnerId": "PARTNER-01",
+      "type": "PURCHASE",
+      "paymentMethod": "BANK",
+      "amount": 10000000,
+      "refCode": "PO-202610-01",
+      "note": "Thanh toán đợt 1 tiền mua thép tấm Hòa Phát"
+    },
+    {
+      "id": "PC-202610-02",
+      "code": "PC-202610-02",
+      "date": "2026-10-06",
+      "partnerId": null,
+      "type": "OVERHEAD",
+      "paymentMethod": "CASH",
+      "amount": 1500000,
+      "refCode": "CHI-XUONG",
+      "note": "Tiền điện phân xưởng gia công tuần 1 tháng 10"
+    }
+  ],
+  "costCalculations": [
+    {
+      "id": "COST-01",
+      "productionOrderId": "LSX-202610-002",
+      "date": "2026-10-07",
+      "targetItemCode": "BTP-KHUNG-4060",
+      "targetItemName": "Khung Thân Tủ 400x600 (Đã Cắt Chấn)",
+      "completedQty": 30,
+      "materialCost": 3542000,
+      "laborCost": 540000,
+      "overheadCost": 270000,
+      "totalCost": 4352000,
+      "unitCost": 145066,
+      "standardBomCost": 146300,
+      "variance": -1234
+    }
+  ]
+}
