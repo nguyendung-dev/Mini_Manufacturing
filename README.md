@@ -13,11 +13,11 @@ Xây dựng theo đúng tài liệu phân tích kỹ thuật: `Mini_Manufacturin
   - Cung cấp API RESTful cho 8 module nghiệp vụ, xác thực đăng nhập/đăng ký tài khoản và lưu trữ ma trận phân quyền trong MySQL.
   - Cổng chạy: `http://localhost:5001`
 
-- `frontend/`: **React (Vite) + Tailwind CSS**
-  - Màn hình Đăng nhập / Đăng ký nhân sự xưởng.
+- `frontend/`: **Next.js (App Router, Turbopack) + React + Tailwind CSS**
+  - Màn hình Đăng nhập / Đăng ký nhân sự xưởng chuẩn ERP.
   - Bảng ma trận phân quyền trực quan theo vai trò (Role-Based Access Control Matrix).
   - Tự động ẩn/hiện menu module theo quyền của tài khoản đang đăng nhập.
-  - Cổng chạy: `http://localhost:3001` (hoặc `http://localhost:3000`)
+  - Cổng chạy: `http://localhost:3001` (lệnh `npm run dev`)
 
 ---
 

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_BASE = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'http://localhost:5001/api';
 
 export async function fetchApi(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;

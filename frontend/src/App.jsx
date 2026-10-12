@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import DashboardView from './views/DashboardView';
 import CatalogView from './views/CatalogView';
