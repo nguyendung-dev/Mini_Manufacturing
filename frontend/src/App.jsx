@@ -238,7 +238,7 @@ export default function App() {
                   HT softtech ERP
                 </div>
                 <div className="text-[11px] text-zinc-500 font-normal truncate">
-                  Quản Trị Sản Xuất
+                  Quản Trị Xưởng Gỗ
                 </div>
               </div>
             )}

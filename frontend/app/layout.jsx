@@ -1,8 +1,8 @@
 import '../src/index.css';
 
 export const metadata = {
-  title: 'HT softtech ERP - Quản Trị Sản Xuất & Kho Xưởng',
-  description: 'Hệ thống điều hành sản xuất và kho vật tư cơ khí chế tạo',
+  title: 'HT softtech ERP - Quản Trị Sản Xuất & Kho Xưởng Gỗ Nội Thất',
+  description: 'Hệ thống điều hành sản xuất và kho vật tư xưởng mộc, nội thất gỗ tự nhiên & gỗ công nghiệp',
 };
 
 export default function RootLayout({ children }) {

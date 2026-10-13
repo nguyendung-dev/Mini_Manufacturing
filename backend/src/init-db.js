@@ -310,167 +310,201 @@ async function initDatabase() {
 
   console.log('Tables initialized. Checking seed data...');
 
+  const [existingThep] = await pool.query("SELECT COUNT(*) as count FROM items WHERE code LIKE 'NVL-THEP%'");
   const [existingItems] = await pool.query('SELECT COUNT(*) as count FROM items');
-  if (existingItems[0].count === 0) {
-    console.log('Seeding initial data...');
+  if (existingThep[0].count > 0 || existingItems[0].count === 0) {
+    console.log('Seeding initial Woodworking & Furniture ERP data...');
+    await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+    await pool.query('TRUNCATE TABLE cost_calculations');
+    await pool.query('TRUNCATE TABLE cash_payments');
+    await pool.query('TRUNCATE TABLE cash_receipts');
+    await pool.query('TRUNCATE TABLE sales_order_items');
+    await pool.query('TRUNCATE TABLE sales_orders');
+    await pool.query('TRUNCATE TABLE purchase_order_items');
+    await pool.query('TRUNCATE TABLE purchase_orders');
+    await pool.query('TRUNCATE TABLE stock_transaction_items');
+    await pool.query('TRUNCATE TABLE stock_transactions');
+    await pool.query('TRUNCATE TABLE production_allocations');
+    await pool.query('TRUNCATE TABLE production_stages');
+    await pool.query('TRUNCATE TABLE production_orders');
+    await pool.query('TRUNCATE TABLE bom_items');
+    await pool.query('TRUNCATE TABLE boms');
+    await pool.query('TRUNCATE TABLE partners');
+    await pool.query('TRUNCATE TABLE stock');
+    await pool.query('TRUNCATE TABLE items');
+    await pool.query('TRUNCATE TABLE warehouses');
+    await pool.query('TRUNCATE TABLE categories');
+    await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+
     // Seed Categories
     await pool.query(`
       INSERT INTO categories (id, name, type) VALUES
-      ('CAT-01', 'Thép & Kim loại tấm', 'NVL'),
-      ('CAT-02', 'Hóa chất & Sơn', 'NVL'),
-      ('CAT-03', 'Phụ kiện cơ khí', 'NVL'),
-      ('CAT-04', 'Bán thành phẩm gia công', 'BTP'),
-      ('CAT-05', 'Tủ bảng điện hoàn chỉnh', 'TP');
+      ('CAT-01', 'Gỗ Tự Nhiên & Ván Công Nghiệp', 'NVL'),
+      ('CAT-02', 'Phụ Kiện Ngũ Kim Mộc & Ray Bản Lề', 'NVL'),
+      ('CAT-03', 'Sơn PU, Keo Dán & Vật Tư Hoàn Thiện', 'NVL'),
+      ('CAT-04', 'Bán Thành Phẩm Mộc Thô (BTP)', 'BTP'),
+      ('CAT-05', 'Đồ Gỗ Nội Thất Hoàn Thiện (TP)', 'TP');
     `);
 
     // Seed Warehouses
     await pool.query(`
       INSERT INTO warehouses (id, code, name, type, location) VALUES
-      ('WH-NVL', 'KHO-NVL', 'Kho Nguyên Vật Liệu', 'NVL', 'Khu A - Tầng 1'),
-      ('WH-BTP', 'KHO-BTP', 'Kho Bán Thành Phẩm', 'BTP', 'Khu B - Giữa xưởng'),
-      ('WH-TP', 'KHO-TP', 'Kho Thành Phẩm', 'TP', 'Khu C - Cạnh cổng xuất'),
-      ('WH-SX', 'KHO-SX', 'Kho Đệm Sản Xuất (Line SX)', 'SX', 'Khu máy dập chấn & lắp ráp');
+      ('WH-NVL', 'KHO-GO', 'Kho Gỗ Khối & Ván MDF', 'NVL', 'Khu A - Gỗ Sồi, Gỗ Tự Nhiên & Ván MDF An Cường'),
+      ('WH-PK', 'KHO-NGUKIM', 'Kho Phụ Kiện Ngũ Kim & Sơn PU', 'NVL', 'Khu B - Bản lề Hafele, Ray trượt, Keo Titebond & Sơn PU'),
+      ('WH-BTP', 'KHO-BTP', 'Kho Bán Thành Phẩm Mộc Thô', 'BTP', 'Khu C - Khung chân, mặt bàn phôi mộc sau CNC'),
+      ('WH-TP', 'KHO-TP', 'Kho Thành Phẩm Nội Thất', 'TP', 'Khu D - Hàng bọc màng PE chống xước sẵn sàng giao'),
+      ('WH-SX', 'KHO-SX', 'Khu Line Sản Xuất & Buồng Sơn PU', 'SX', 'Khu máy xẻ nan, dán cạnh tự động & phòng phun sơn');
     `);
 
     // Seed Items
     await pool.query(`
       INSERT INTO items (id, code, name, type, category_id, unit, cost_price, sale_price, min_stock) VALUES
-      ('ITEM-NVL-01', 'NVL-THEP-15', 'Thép Tấm SS400 1.5mm (1200x2400)', 'NVL', 'CAT-01', 'Kg', 22000, 0, 300),
-      ('ITEM-NVL-02', 'NVL-SON-XAM', 'Bột Sơn Tĩnh Điện Xám Sần RAL 7035', 'NVL', 'CAT-02', 'Kg', 65000, 0, 50),
-      ('ITEM-NVL-03', 'NVL-BULONG-M6', 'Bulong + Tán M6 Inox 304', 'NVL', 'CAT-03', 'Con', 1200, 0, 1000),
-      ('ITEM-NVL-04', 'NVL-KHOA-MS', 'Khóa Bật Tay Gạt Tủ Điện MS818', 'NVL', 'CAT-03', 'Bộ', 32000, 0, 50),
-      ('ITEM-BTP-01', 'BTP-KHUNG-4060', 'Khung Thân Tủ 400x600 (Đã Cắt Chấn)', 'BTP', 'CAT-04', 'Cái', 145000, 0, 10),
-      ('ITEM-BTP-02', 'BTP-CANH-4060', 'Cánh Tủ 400x600 (Đã Đột Lỗ Đèn Báo)', 'BTP', 'CAT-04', 'Cái', 62000, 0, 10),
-      ('ITEM-TP-01', 'TP-TU-406020', 'Vỏ Tủ Điện Trong Nhà 400x600x200mm', 'TP', 'CAT-05', 'Chiếc', 298000, 480000, 5),
-      ('ITEM-TP-02', 'TP-TU-507025', 'Vỏ Tủ Điện Ngoài Trời Mái Che 500x700x250mm', 'TP', 'CAT-05', 'Chiếc', 420000, 690000, 3);
+      ('ITEM-NVL-01', 'NVL-GO-SOI', 'Gỗ Sồi Trắng Bắc Mỹ (White Oak) Xẻ Sấy 4/4', 'NVL', 'CAT-01', 'm3', 18500000, 0, 2),
+      ('ITEM-NVL-02', 'NVL-MDF-AC17', 'Ván MDF Lõi Xanh Chống Ẩm An Cường 17mm (1220x2440)', 'NVL', 'CAT-01', 'Tấm', 385000, 0, 30),
+      ('ITEM-NVL-03', 'NVL-BANLE-HF', 'Bản Lề Bật Giảm Chấn Hafele Inox 304', 'NVL', 'CAT-02', 'Cái', 28000, 0, 100),
+      ('ITEM-NVL-04', 'NVL-RAY-450', 'Ray Trượt Bi 3 Tầng Giảm Chấn 450mm', 'NVL', 'CAT-02', 'Bộ', 65000, 0, 20),
+      ('ITEM-NVL-05', 'NVL-SON-PU', 'Bộ Sơn Lót & Sơn Phủ Bóng PU 2K Oseven', 'NVL', 'CAT-03', 'Bộ', 420000, 0, 10),
+      ('ITEM-NVL-06', 'NVL-KEO-TB', 'Keo Ghép Mộng Gỗ Titebond II Premium (Bình 3.78L)', 'NVL', 'CAT-03', 'Bình', 450000, 0, 5),
+      ('ITEM-BTP-01', 'BTP-MATBAN-SOI', 'Mặt Bàn Gỗ Sồi Ghép Mộng 1800x900x35mm (Mộc Thô)', 'BTP', 'CAT-04', 'Tấm', 1650000, 0, 5),
+      ('ITEM-BTP-02', 'BTP-CHAN-SOI', 'Bộ Khung Chân Bàn Ăn Gỗ Sồi Tiện Rãnh (Mộc Thô)', 'BTP', 'CAT-04', 'Bộ', 850000, 0, 5),
+      ('ITEM-BTP-03', 'BTP-THUNGTU-MDF', 'Khoang Thùng Tủ Quần Áo MDF Cắt CNC & Dán Nẹp', 'BTP', 'CAT-04', 'Khoang', 920000, 0, 5),
+      ('ITEM-TP-01', 'TP-BANAN-SOI-6G', 'Bàn Ăn Gỗ Sồi Tự Nhiên 6 Ghế Sơn PU Cao Cấp (1m8x0.9m)', 'TP', 'CAT-05', 'Bộ', 5200000, 8500000, 2),
+      ('ITEM-TP-02', 'TP-TU-AO-4C', 'Tủ Quần Áo 4 Cánh Kịch Trần MDF An Cường (2m4x2m0)', 'TP', 'CAT-05', 'Chiếc', 6800000, 11500000, 1);
     `);
 
     // Seed Stock
     await pool.query(`
       INSERT INTO stock (id, warehouse_id, item_id, lot_number, quantity) VALUES
-      ('STK-01', 'WH-NVL', 'ITEM-NVL-01', 'LOT-THEP-202610A', 850),
-      ('STK-02', 'WH-NVL', 'ITEM-NVL-02', 'LOT-SON-202610', 120),
-      ('STK-03', 'WH-NVL', 'ITEM-NVL-03', 'LOT-BL-202609', 2500),
-      ('STK-04', 'WH-NVL', 'ITEM-NVL-04', 'LOT-KH-202609', 80),
-      ('STK-05', 'WH-BTP', 'ITEM-BTP-01', 'LOT-BTP-202610-01', 25),
-      ('STK-06', 'WH-BTP', 'ITEM-BTP-02', 'LOT-BTP-202610-02', 20),
-      ('STK-07', 'WH-TP', 'ITEM-TP-01', 'LOT-TP-202610-01', 12),
-      ('STK-08', 'WH-TP', 'ITEM-TP-02', 'LOT-TP-202610-02', 6),
-      ('STK-09', 'WH-SX', 'ITEM-NVL-01', 'LOT-THEP-202610A', 55);
+      ('STK-01', 'WH-NVL', 'ITEM-NVL-01', 'LOT-GO-202610-A', 12.5),
+      ('STK-02', 'WH-NVL', 'ITEM-NVL-02', 'LOT-MDF-202610', 85),
+      ('STK-03', 'WH-PK', 'ITEM-NVL-03', 'LOT-HF-202609', 320),
+      ('STK-04', 'WH-PK', 'ITEM-NVL-04', 'LOT-RAY-202609', 45),
+      ('STK-05', 'WH-PK', 'ITEM-NVL-05', 'LOT-PU-202610', 18),
+      ('STK-06', 'WH-PK', 'ITEM-NVL-06', 'LOT-TB-202610', 12),
+      ('STK-07', 'WH-BTP', 'ITEM-BTP-01', 'LOT-BTP-MATBAN-01', 8),
+      ('STK-08', 'WH-BTP', 'ITEM-BTP-02', 'LOT-BTP-CHAN-01', 8),
+      ('STK-09', 'WH-TP', 'ITEM-TP-01', 'LOT-TP-BANAN-202610', 4),
+      ('STK-10', 'WH-TP', 'ITEM-TP-02', 'LOT-TP-TUAO-202610', 2),
+      ('STK-11', 'WH-SX', 'ITEM-NVL-01', 'LOT-GO-202610-A', 1.8);
     `);
 
     // Seed Partners
     await pool.query(`
       INSERT INTO partners (id, code, name, type, phone, address, debt) VALUES
-      ('PARTNER-01', 'NCC-HOAPHAT', 'Công Ty Cổ Phần Thép Hòa Phát', 'SUPPLIER', '0243.987.6543', 'KCN Phố Nối A, Hưng Yên', 12000000),
-      ('PARTNER-02', 'NCC-AKZO', 'Công Ty TNHH Sơn AkzoNobel Việt Nam', 'SUPPLIER', '0283.829.1122', 'KCN Amata, Đồng Nai', 4500000),
-      ('PARTNER-03', 'KH-METANBINH', 'Công Ty TNHH Cơ Điện & Chiếu Sáng Tân Bình', 'CUSTOMER', '0903.123.456', '45 Trường Chinh, Q. Tân Bình, TP.HCM', 7200000),
-      ('PARTNER-04', 'KH-DIENLUC', 'Xí Nghiệp Xây Lắp Điện Lực Miền Nam', 'CUSTOMER', '0912.888.999', 'Số 10 Nguyễn Huệ, Quận 1, TP.HCM', 0);
+      ('PARTNER-01', 'NCC-ANCUONG', 'Công Ty Cổ Phần Gỗ An Cường', 'SUPPLIER', '0283.862.5727', '279 Nguyễn Tri Phương, P.5, Q.10, TP.HCM', 18500000),
+      ('PARTNER-02', 'NCC-GOMY', 'Tổng Kho Gỗ Nhập Khẩu Bắc Mỹ KingWood', 'SUPPLIER', '0913.567.890', 'Cảng Đình Vũ, Hải Phòng', 45000000),
+      ('PARTNER-03', 'NCC-HAFELE', 'Công Ty TNHH Hafele Việt Nam', 'SUPPLIER', '0283.911.5678', '9 Nguyễn Minh Hoàng, P.12, Q. Tân Bình, TP.HCM', 5600000),
+      ('PARTNER-04', 'KH-VINHOMES', 'BQL Dự Án Căn Hộ Vinhomes Ocean Park (A+ Decor)', 'CUSTOMER', '0903.888.777', 'Khu Đô Thị Vinhomes Ocean Park, Gia Lâm, Hà Nội', 35000000),
+      ('PARTNER-05', 'KH-ECOPARK', 'Biệt Thự Vườn Ecopark Grand The Island', 'CUSTOMER', '0988.123.456', 'Khu Đô Thị Ecopark, Văn Giang, Hưng Yên', 0);
     `);
 
     // Seed BOMs
     await pool.query(`
       INSERT INTO boms (id, code, name, target_item_id, version, standard_qty, notes) VALUES
-      ('BOM-01', 'BOM-TP-406020-V1', 'BOM Vỏ Tủ Điện Trong Nhà 400x600x200 (V1.0)', 'ITEM-TP-01', '1.0', 1, 'Định mức tiêu chuẩn cho 1 vỏ tủ hoàn thiện'),
-      ('BOM-02', 'BOM-BTP-KHUNG-V1', 'BOM Khung Thân Tủ 400x600 (V1.0)', 'ITEM-BTP-01', '1.0', 1, 'Định mức cắt chấn thép tấm'),
-      ('BOM-03', 'BOM-BTP-CANH-V1', 'BOM Cánh Tủ 400x600 (V1.0)', 'ITEM-BTP-02', '1.0', 1, 'Định mức dập chấn đột lỗ cánh');
+      ('BOM-01', 'BOM-BANAN-SOI-V1', 'BOM Bàn Ăn Gỗ Sồi 6 Ghế Tự Nhiên (V1.0)', 'ITEM-TP-01', '1.0', 1, 'Định mức tiêu chuẩn cho 1 bộ bàn ăn gỗ sồi hoàn thiện sơn PU'),
+      ('BOM-02', 'BOM-MATBAN-SOI-V1', 'BOM Mặt Bàn Gỗ Sồi Ghép Mộng 1m8 (V1.0)', 'ITEM-BTP-01', '1.0', 1, 'Định mức xẻ phôi, ghép mộng & bào phẳng mặt bàn'),
+      ('BOM-03', 'BOM-TUAO-MDF-V1', 'BOM Tủ Quần Áo 4 Cánh MDF An Cường (V1.0)', 'ITEM-TP-02', '1.0', 1, 'Định mức ván MDF, bản lề giảm chấn & ray trượt bi');
     `);
 
     await pool.query(`
       INSERT INTO bom_items (id, bom_id, item_id, qty, scrap_rate, note) VALUES
-      ('BI-01', 'BOM-01', 'ITEM-BTP-01', 1, 0, 'Khung thân tủ'),
-      ('BI-02', 'BOM-01', 'ITEM-BTP-02', 1, 0, 'Cánh tủ'),
-      ('BI-03', 'BOM-01', 'ITEM-NVL-02', 1.2, 5, 'Sơn tĩnh điện (bao gồm hao hụt)'),
-      ('BI-04', 'BOM-01', 'ITEM-NVL-03', 16, 2, 'Bulong ốc vít'),
-      ('BI-05', 'BOM-01', 'ITEM-NVL-04', 2, 0, 'Khóa gạt MS818'),
-      ('BI-06', 'BOM-02', 'ITEM-NVL-01', 5.2, 3, 'Thép tấm 1.5mm tính cả hao hụt mạt cắt'),
-      ('BI-07', 'BOM-03', 'ITEM-NVL-01', 2.1, 2, 'Thép tấm 1.5mm');
+      ('BI-01', 'BOM-01', 'ITEM-BTP-01', 1, 0, 'Mặt bàn mộc thô'),
+      ('BI-02', 'BOM-01', 'ITEM-BTP-02', 1, 0, 'Bộ khung chân mộc thô'),
+      ('BI-03', 'BOM-01', 'ITEM-NVL-05', 0.5, 5, 'Bộ sơn lót & bóng PU Oseven (hao hụt 5%)'),
+      ('BI-04', 'BOM-01', 'ITEM-NVL-06', 0.1, 0, 'Keo ghép mộng liên kết mộc'),
+      ('BI-05', 'BOM-02', 'ITEM-NVL-01', 0.085, 12, 'Gỗ Sồi xẻ sấy FAS (hao hụt xẻ pha phôi 12%)'),
+      ('BI-06', 'BOM-02', 'ITEM-NVL-06', 0.15, 2, 'Keo ghép mộng Titebond II ép vam thủy lực'),
+      ('BI-07', 'BOM-03', 'ITEM-NVL-02', 4.5, 4, 'Ván MDF lõi xanh 17mm An Cường'),
+      ('BI-08', 'BOM-03', 'ITEM-NVL-03', 16, 0, 'Bản lề bật giảm chấn Hafele'),
+      ('BI-09', 'BOM-03', 'ITEM-NVL-04', 3, 0, 'Bộ ray trượt ngăn kéo 450mm');
     `);
 
     // Seed Production Orders
     await pool.query(`
       INSERT INTO production_orders (id, code, date, target_item_id, bom_id, planned_qty, actual_qty, defective_qty, lot_number, warehouse_id, status, notes) VALUES
-      ('LSX-202610-001', 'LSX-202610-001', '2026-10-10', 'ITEM-TP-01', 'BOM-01', 20, 12, 1, 'LOT-TP-202610-01', 'WH-TP', 'IN_PROGRESS', 'Sản xuất giao đơn hàng khách ME Tân Bình'),
-      ('LSX-202610-002', 'LSX-202610-002', '2026-10-05', 'ITEM-BTP-01', 'BOM-02', 30, 30, 0, 'LOT-BTP-202610-01', 'WH-BTP', 'COMPLETED', 'Gia công sẵn BTP khung thân tủ');
+      ('LSX-202610-001', 'LSX-202610-001', '2026-10-10', 'ITEM-TP-01', 'BOM-01', 10, 4, 0, 'LOT-TP-BANAN-202610', 'WH-TP', 'IN_PROGRESS', 'Sản xuất 10 bộ bàn ăn gỗ sồi giao dự án căn hộ Vinhomes Ocean Park'),
+      ('LSX-202610-002', 'LSX-202610-002', '2026-10-05', 'ITEM-BTP-01', 'BOM-02', 15, 15, 0, 'LOT-BTP-MATBAN-01', 'WH-BTP', 'COMPLETED', 'Gia công sẵn 15 mặt bàn gỗ sồi ghép mộng chuẩn bị cho đơn hàng mùa cưới');
     `);
 
     await pool.query(`
       INSERT INTO production_stages (id, production_order_id, name, stage_order, status, completed_qty) VALUES
-      ('STG-01', 'LSX-202610-001', 'Cắt & Chấn khung/cánh', 1, 'COMPLETED', 20),
-      ('STG-02', 'LSX-202610-001', 'Sơn tĩnh điện sấy nhiệt', 2, 'COMPLETED', 18),
-      ('STG-03', 'LSX-202610-001', 'Lắp ráp phụ kiện & Đóng gói', 3, 'IN_PROGRESS', 12),
-      ('STG-04', 'LSX-202610-002', 'Xả phôi & Cắt CNC', 1, 'COMPLETED', 30),
-      ('STG-05', 'LSX-202610-002', 'Chấn gập cạnh khung', 2, 'COMPLETED', 30),
-      ('STG-06', 'LSX-202610-002', 'Hàn đính & Mài góc', 3, 'COMPLETED', 30);
+      ('STG-01', 'LSX-202610-001', 'Xẻ phôi & Bào thẩm 4 mặt', 1, 'COMPLETED', 10),
+      ('STG-02', 'LSX-202610-001', 'Ghép mộng & Ráp khung bàn mộc thô', 2, 'COMPLETED', 10),
+      ('STG-03', 'LSX-202610-001', 'Chà nhám làm nguội P180/P240', 3, 'COMPLETED', 8),
+      ('STG-04', 'LSX-202610-001', 'Sơn lót & Phủ bóng PU 2K Oseven', 4, 'IN_PROGRESS', 4),
+      ('STG-05', 'LSX-202610-001', 'KCS & Bọc màng PE xuất xưởng', 5, 'PENDING', 0),
+      ('STG-06', 'LSX-202610-002', 'Rong xẻ nan gỗ theo quy cách', 1, 'COMPLETED', 15),
+      ('STG-07', 'LSX-202610-002', 'Bôi keo Titebond ép vam thủy lực', 2, 'COMPLETED', 15),
+      ('STG-08', 'LSX-202610-002', 'Bào phẳng 2 mặt & Cắt tề đầu CNC', 3, 'COMPLETED', 15);
     `);
 
     await pool.query(`
       INSERT INTO production_allocations (id, production_order_id, item_id, planned_qty, allocated_qty, actual_used_qty, lot_number) VALUES
-      ('AL-01', 'LSX-202610-001', 'ITEM-BTP-01', 20, 20, 20, 'LOT-BTP-202610-01'),
-      ('AL-02', 'LSX-202610-001', 'ITEM-BTP-02', 20, 20, 20, 'LOT-BTP-202610-02'),
-      ('AL-03', 'LSX-202610-001', 'ITEM-NVL-02', 25.2, 26, 25, 'LOT-SON-202610'),
-      ('AL-04', 'LSX-202610-001', 'ITEM-NVL-03', 326.4, 330, 250, 'LOT-BL-202609'),
-      ('AL-05', 'LSX-202610-001', 'ITEM-NVL-04', 40, 40, 24, 'LOT-KH-202609'),
-      ('AL-06', 'LSX-202610-002', 'ITEM-NVL-01', 160.68, 161, 161, 'LOT-THEP-202610A');
+      ('AL-01', 'LSX-202610-001', 'ITEM-BTP-01', 10, 10, 10, 'LOT-BTP-MATBAN-01'),
+      ('AL-02', 'LSX-202610-001', 'ITEM-BTP-02', 10, 10, 10, 'LOT-BTP-CHAN-01'),
+      ('AL-03', 'LSX-202610-001', 'ITEM-NVL-05', 5.25, 6, 2.5, 'LOT-PU-202610'),
+      ('AL-04', 'LSX-202610-001', 'ITEM-NVL-06', 1, 1, 0.4, 'LOT-TB-202610'),
+      ('AL-05', 'LSX-202610-002', 'ITEM-NVL-01', 1.428, 1.5, 1.45, 'LOT-GO-202610-A'),
+      ('AL-06', 'LSX-202610-002', 'ITEM-NVL-06', 2.295, 2.5, 2.3, 'LOT-TB-202610');
     `);
 
     // Seed Stock Transactions
     await pool.query(`
       INSERT INTO stock_transactions (id, code, date, type, status, source_warehouse_id, dest_warehouse_id, partner_id, ref_code, note) VALUES
-      ('ST-01', 'PNK-202610-001', '2026-10-02', 'IN_PURCHASE', 'POSTED', NULL, 'WH-NVL', 'PARTNER-01', 'PO-202610-01', 'Nhập kho thép tấm SS400 từ Hòa Phát'),
-      ('ST-02', 'PXK-202610-001', '2026-10-05', 'TRANSFER', 'POSTED', 'WH-NVL', 'WH-SX', NULL, 'LSX-202610-002', 'Cấp phát thép ra line sản xuất theo LSX-202610-002'),
-      ('ST-03', 'PNK-202610-002', '2026-10-07', 'IN_PRODUCTION', 'POSTED', 'WH-SX', 'WH-BTP', NULL, 'LSX-202610-002', 'Nhập kho BTP hoàn thành từ LSX-202610-002');
+      ('ST-01', 'PNK-202610-001', '2026-10-02', 'IN_PURCHASE', 'POSTED', NULL, 'WH-NVL', 'PARTNER-02', 'PO-202610-01', 'Nhập kho lô Gỗ Sồi Bắc Mỹ xẻ sấy từ KingWood'),
+      ('ST-02', 'PXK-202610-001', '2026-10-05', 'TRANSFER', 'POSTED', 'WH-NVL', 'WH-SX', NULL, 'LSX-202610-002', 'Xuất cấp phát Gỗ Sồi ra xưởng mộc phục vụ LSX-202610-002'),
+      ('ST-03', 'PNK-202610-002', '2026-10-07', 'IN_PRODUCTION', 'POSTED', 'WH-SX', 'WH-BTP', NULL, 'LSX-202610-002', 'Nhập kho 15 Mặt Bàn Gỗ Sồi mộc hoàn thành từ LSX-202610-002');
     `);
 
     await pool.query(`
       INSERT INTO stock_transaction_items (id, transaction_id, item_id, lot_number, qty, price) VALUES
-      ('STI-01', 'ST-01', 'ITEM-NVL-01', 'LOT-THEP-202610A', 1000, 22000),
-      ('STI-02', 'ST-02', 'ITEM-NVL-01', 'LOT-THEP-202610A', 161, 22000),
-      ('STI-03', 'ST-03', 'ITEM-BTP-01', 'LOT-BTP-202610-01', 30, 145000);
+      ('STI-01', 'ST-01', 'ITEM-NVL-01', 'LOT-GO-202610-A', 14, 18500000),
+      ('STI-02', 'ST-02', 'ITEM-NVL-01', 'LOT-GO-202610-A', 1.5, 18500000),
+      ('STI-03', 'ST-03', 'ITEM-BTP-01', 'LOT-BTP-MATBAN-01', 15, 1650000);
     `);
 
     // Seed Purchase Orders & Sales Orders
     await pool.query(`
       INSERT INTO purchase_orders (id, code, date, partner_id, status, total_amount, paid_amount, notes) VALUES
-      ('PO-202610-01', 'PO-202610-01', '2026-10-01', 'PARTNER-01', 'RECEIVED', 22000000, 10000000, 'Đơn đặt mua thép tấm chuẩn bị cho sản xuất tháng 10'),
-      ('PO-202610-02', 'PO-202610-02', '2026-10-08', 'PARTNER-02', 'CONFIRMED', 6500000, 2000000, 'Đặt thêm bột sơn tĩnh điện màu xám sần');
+      ('PO-202610-01', 'PO-202610-01', '2026-10-01', 'PARTNER-02', 'RECEIVED', 259000000, 100000000, 'Đơn mua 14 m3 Gỗ Sồi Bắc Mỹ FAS xẻ sấy phục vụ sản xuất Quý 4'),
+      ('PO-202610-02', 'PO-202610-02', '2026-10-08', 'PARTNER-01', 'CONFIRMED', 38500000, 15000000, 'Đặt mua 100 tấm Ván MDF An Cường chống ẩm 17mm');
     `);
 
     await pool.query(`
       INSERT INTO purchase_order_items (id, order_id, item_id, qty, received_qty, unit_price, amount) VALUES
-      ('POI-01', 'PO-202610-01', 'ITEM-NVL-01', 1000, 1000, 22000, 22000000),
-      ('POI-02', 'PO-202610-02', 'ITEM-NVL-02', 100, 0, 65000, 6500000);
+      ('POI-01', 'PO-202610-01', 'ITEM-NVL-01', 14, 14, 18500000, 259000000),
+      ('POI-02', 'PO-202610-02', 'ITEM-NVL-02', 100, 0, 385000, 38500000);
     `);
 
     await pool.query(`
       INSERT INTO sales_orders (id, code, date, partner_id, status, total_amount, paid_amount, notes) VALUES
-      ('SO-202610-01', 'SO-202610-01', '2026-10-09', 'PARTNER-03', 'CONFIRMED', 9600000, 2400000, 'Hợp đồng cấp vỏ tủ cho công trình trạm biến áp Tân Bình');
+      ('SO-202610-01', 'SO-202610-01', '2026-10-09', 'PARTNER-04', 'CONFIRMED', 85000000, 25000000, 'Hợp đồng cung cấp 10 Bộ bàn ăn gỗ sồi tự nhiên cho dự án Vinhomes');
     `);
 
     await pool.query(`
       INSERT INTO sales_order_items (id, order_id, item_id, qty, delivered_qty, unit_price, amount) VALUES
-      ('SOI-01', 'SO-202610-01', 'ITEM-TP-01', 20, 0, 480000, 9600000);
+      ('SOI-01', 'SO-202610-01', 'ITEM-TP-01', 10, 0, 8500000, 85000000);
     `);
 
     // Seed Cash Receipts & Payments
     await pool.query(`
       INSERT INTO cash_receipts (id, code, date, partner_id, type, payment_method, amount, ref_code, note) VALUES
-      ('PT-202610-01', 'PT-202610-01', '2026-10-09', 'PARTNER-03', 'SALE', 'BANK', 2400000, 'SO-202610-01', 'Thu tạm ứng 25% giá trị đơn hàng SO-202610-01');
+      ('PT-202610-01', 'PT-202610-01', '2026-10-09', 'PARTNER-04', 'SALE', 'BANK', 25000000, 'SO-202610-01', 'Thu tạm ứng đợt 1 hợp đồng bàn ăn gỗ sồi Vinhomes Ocean Park');
     `);
 
     await pool.query(`
       INSERT INTO cash_payments (id, code, date, partner_id, type, payment_method, amount, ref_code, note) VALUES
-      ('PC-202610-01', 'PC-202610-01', '2026-10-03', 'PARTNER-01', 'PURCHASE', 'BANK', 10000000, 'PO-202610-01', 'Thanh toán đợt 1 tiền mua thép tấm Hòa Phát'),
-      ('PC-202610-02', 'PC-202610-02', '2026-10-06', NULL, 'OVERHEAD', 'CASH', 1500000, 'CHI-XUONG', 'Tiền điện phân xưởng gia công tuần 1 tháng 10');
+      ('PC-202610-01', 'PC-202610-01', '2026-10-03', 'PARTNER-02', 'PURCHASE', 'BANK', 100000000, 'PO-202610-01', 'Thanh toán tiền mua gỗ sồi KingWood đợt 1'),
+      ('PC-202610-02', 'PC-202610-02', '2026-10-06', NULL, 'OVERHEAD', 'CASH', 4500000, 'CHI-XUONG', 'Tiền điện 3 pha buồng sơn & máy xẻ gỗ tuần 1 tháng 10');
     `);
 
     // Seed Cost Calculations
     await pool.query(`
       INSERT INTO cost_calculations (id, production_order_id, date, target_item_code, target_item_name, completed_qty, material_cost, labor_cost, overhead_cost, total_cost, unit_cost, standard_bom_cost, variance) VALUES
-      ('COST-01', 'LSX-202610-002', '2026-10-07', 'BTP-KHUNG-4060', 'Khung Thân Tủ 400x600 (Đã Cắt Chấn)', 30, 3542000, 540000, 270000, 4352000, 145066.67, 146300, -1233.33);
+      ('COST-01', 'LSX-202610-002', '2026-10-07', 'BTP-MATBAN-SOI', 'Mặt Bàn Gỗ Sồi Ghép Mộng 1800x900x35mm (Mộc Thô)', 15, 23925000, 3000000, 1500000, 28425000, 1895000, 1920000, -25000);
     `);
 
-    console.log('Seed data inserted successfully!');
+    console.log('Woodworking seed data inserted successfully!');
   }
 
   await pool.end();
