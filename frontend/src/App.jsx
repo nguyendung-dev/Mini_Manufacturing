@@ -62,11 +62,11 @@ export default function App() {
     setPermissions(null);
   };
 
-  // Cấu trúc phân hệ chuẩn ERP công nghiệp (Không dùng Emoji, dùng SVG chuyên nghiệp)
+  // Cấu trúc phân hệ chuẩn ERP sản xuất theo đúng trình tự nghiệp vụ 1 -> 8
   const menuGroups = [
     {
       key: 'dieuhanh',
-      title: 'TỔNG QUAN HỆ THỐNG',
+      title: 'TỔNG QUAN & HỆ THỐNG',
       items: [
         {
           id: 'dashboard',
@@ -81,7 +81,7 @@ export default function App() {
         },
         {
           id: 'matrix',
-          label: 'Phân quyền người dùng',
+          label: 'Phân quyền người dùng (RBAC)',
           permKey: 'role_matrix',
           breadcrumb: 'Hệ thống / Ma trận phân quyền RBAC',
           icon: (
@@ -93,9 +93,20 @@ export default function App() {
       ]
     },
     {
-      key: 'sanxuat',
-      title: 'QUẢN LÝ SẢN XUẤT',
+      key: 'danhmuc',
+      title: '1. DỮ LIỆU GỐC & KỸ THUẬT',
       items: [
+        {
+          id: 'catalog',
+          label: 'Danh mục Vật tư, Kho & Đối tác',
+          permKey: 'catalog',
+          breadcrumb: 'Danh mục / Khai báo vật tư NVL, BTP, TP, Kho và Đối tác',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          )
+        },
         {
           id: 'boms',
           label: 'Định mức kỹ thuật (BOM)',
@@ -106,24 +117,24 @@ export default function App() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           )
-        },
-        {
-          id: 'production',
-          label: 'Lệnh sản xuất (LSX)',
-          permKey: 'production_view',
-          breadcrumb: 'Sản xuất / Điều độ & Thực hiện lệnh sản xuất',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          )
         }
       ]
     },
     {
-      key: 'kho',
-      title: 'KHO VẬN & VẬT TƯ',
+      key: 'kho_muahang',
+      title: '2. MUA HÀNG & KHO VẬN',
       items: [
+        {
+          id: 'orders',
+          label: 'Mua hàng (PO) & Bán hàng (SO)',
+          permKey: 'orders',
+          breadcrumb: 'Thương mại / Đơn mua hàng PO & Đơn bán hàng SO',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          )
+        },
         {
           id: 'inventory',
           label: 'Sổ kho & Tồn theo lô',
@@ -138,20 +149,26 @@ export default function App() {
       ]
     },
     {
-      key: 'thuongmai',
-      title: 'MUA BÁN & TÀI CHÍNH',
+      key: 'sanxuat',
+      title: '3. QUẢN LÝ SẢN XUẤT',
       items: [
         {
-          id: 'orders',
-          label: 'Mua hàng (PO) & Bán hàng (SO)',
-          permKey: 'orders',
-          breadcrumb: 'Thương mại / Đơn mua hàng PO & Đơn bán hàng SO',
+          id: 'production',
+          label: 'Lệnh sản xuất (LSX)',
+          permKey: 'production_view',
+          breadcrumb: 'Sản xuất / Điều độ & Thực hiện lệnh sản xuất',
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
           )
-        },
+        }
+      ]
+    },
+    {
+      key: 'taichinh',
+      title: '4. TÀI CHÍNH & GIÁ THÀNH',
+      items: [
         {
           id: 'finance',
           label: 'Thu chi & Sổ quỹ nội bộ',
@@ -171,23 +188,6 @@ export default function App() {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          )
-        }
-      ]
-    },
-    {
-      key: 'danhmuc',
-      title: 'DANH MỤC CƠ BẢN',
-      items: [
-        {
-          id: 'catalog',
-          label: 'Vật tư, Kho bãi & Đối tác',
-          permKey: 'catalog',
-          breadcrumb: 'Danh mục / Khai báo vật tư NVL, BTP, TP và Kho',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           )
         }
@@ -223,7 +223,7 @@ export default function App() {
       {/* SIDEBAR BÊN TRÁI: Chuẩn shadcn/ui (Nền trắng, border-zinc-200, menu active zinc-900) */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-18 min-w-[72px] max-w-[72px]' : 'w-64 min-w-[256px] max-w-[256px]'
+          sidebarCollapsed ? 'w-18 min-w-[72px] max-w-[72px]' : 'w-72 min-w-[280px] max-w-[280px]'
         } bg-white text-zinc-900 flex flex-col flex-shrink-0 transition-all duration-150 select-none border-r border-zinc-200`}
       >
         {/* Brand Header */}
