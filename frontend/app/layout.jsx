@@ -3,6 +3,9 @@ import '../src/index.css';
 export const metadata = {
   title: 'QL Xưởng Gỗ',
   description: 'Hệ thống Quản trị Sản xuất & Kho Xưởng Gỗ',
+  icons: {
+    icon: 'data:,',
+  },
 };
 
 
