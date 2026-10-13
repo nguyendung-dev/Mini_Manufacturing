@@ -66,6 +66,17 @@ export default function OrdersView() {
     }
   };
 
+  const handleDeleteOrder = async (order, type) => {
+    const typeLabel = type === 'purchase' ? 'đơn mua hàng (PO)' : 'đơn bán hàng (SO)';
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy / xóa ${typeLabel} "${order.code}"?`)) return;
+    try {
+      await fetchApi(`/orders/${type}/${order.id}`, { method: 'DELETE' });
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleReceivePurchase = async (poId) => {
     if (!window.confirm('Xác nhận nhận hàng và tạo phiếu nhập kho NVL tự động?')) return;
     try {
@@ -249,14 +260,25 @@ export default function OrdersView() {
                     </span>
                   </td>
                   <td className="p-3 text-center">
-                    {po.status !== 'RECEIVED' && (
-                      <button
-                        onClick={() => handleReceivePurchase(po.id)}
-                        className="px-2.5 py-1 text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded shadow-sm"
-                      >
-                        Nhận hàng vào kho
-                      </button>
-                    )}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {po.status !== 'RECEIVED' && (
+                        <button
+                          onClick={() => handleReceivePurchase(po.id)}
+                          className="px-2.5 py-1 text-xs bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded shadow-sm"
+                        >
+                          Nhận kho
+                        </button>
+                      )}
+                      {po.status !== 'RECEIVED' && (
+                        <button
+                          onClick={() => handleDeleteOrder(po, 'purchase')}
+                          className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                          title="Hủy / Xóa đơn PO"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -307,14 +329,25 @@ export default function OrdersView() {
                     </span>
                   </td>
                   <td className="p-3 text-center">
-                    {so.status !== 'DELIVERED' && (
-                      <button
-                        onClick={() => handleDeliverSales(so)}
-                        className="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded shadow-sm"
-                      >
-                        Xuất bán giao hàng
-                      </button>
-                    )}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {so.status !== 'DELIVERED' && (
+                        <button
+                          onClick={() => handleDeliverSales(so)}
+                          className="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded shadow-sm"
+                        >
+                          Xuất bán
+                        </button>
+                      )}
+                      {so.status !== 'DELIVERED' && (
+                        <button
+                          onClick={() => handleDeleteOrder(so, 'sales')}
+                          className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                          title="Hủy / Xóa đơn SO"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

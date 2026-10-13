@@ -106,6 +106,69 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Cập nhật BOM
+router.put('/:id', async (req, res) => {
+  const conn = await getConnection();
+  try {
+    await conn.beginTransaction();
+    const { code, name, target_item_id, version, standard_qty, notes, components } = req.body;
+    
+    await conn.query(`
+      UPDATE boms
+      SET code = COALESCE(?, code),
+          name = COALESCE(?, name),
+          target_item_id = COALESCE(?, target_item_id),
+          version = COALESCE(?, version),
+          standard_qty = COALESCE(?, standard_qty),
+          notes = COALESCE(?, notes)
+      WHERE id = ?
+    `, [code, name, target_item_id, version, standard_qty, notes, req.params.id]);
+
+    if (Array.isArray(components) && components.length > 0) {
+      await conn.query('DELETE FROM bom_items WHERE bom_id = ?', [req.params.id]);
+      for (const comp of components) {
+        const biId = `BI-${Date.now()}-${Math.random().toString().slice(-4)}`;
+        await conn.query(`
+          INSERT INTO bom_items (id, bom_id, item_id, qty, scrap_rate, note)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `, [biId, req.params.id, comp.item_id, comp.qty, comp.scrap_rate || 0, comp.note || '']);
+      }
+    }
+
+    await conn.commit();
+    res.json({ message: 'Cập nhật định mức BOM thành công' });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// Xóa BOM
+router.delete('/:id', async (req, res) => {
+  const conn = await getConnection();
+  try {
+    await conn.beginTransaction();
+    const [orders] = await conn.query('SELECT COUNT(*) as count FROM production_orders WHERE bom_id = ?', [req.params.id]);
+    if (orders && orders[0].count > 0) {
+      await conn.rollback();
+      return res.status(400).json({ error: 'Không thể xóa BOM đã phát sinh Lệnh sản xuất (LSX)' });
+    }
+
+    await conn.query('DELETE FROM bom_items WHERE bom_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM boms WHERE id = ?', [req.params.id]);
+
+    await conn.commit();
+    res.json({ message: 'Xóa định mức BOM thành công' });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 // Tính toán nhu cầu vật tư khi lập kế hoạch sản xuất
 router.post('/:id/calculate-requirement', async (req, res) => {
   try {

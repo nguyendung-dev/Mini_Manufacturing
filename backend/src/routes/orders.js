@@ -320,4 +320,60 @@ router.post('/sales/:id/deliver', async (req, res) => {
   }
 });
 
+// Xóa Đơn mua hàng (PO)
+router.delete('/purchase/:id', async (req, res) => {
+  const conn = await getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query('SELECT status FROM purchase_orders WHERE id = ?', [req.params.id]);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Không tìm thấy đơn mua hàng' });
+    }
+    if (rows[0].status === 'RECEIVED') {
+      await conn.rollback();
+      return res.status(400).json({ error: 'Không thể xóa đơn mua hàng đã nhập kho' });
+    }
+
+    await conn.query('DELETE FROM purchase_order_items WHERE order_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM purchase_orders WHERE id = ?', [req.params.id]);
+
+    await conn.commit();
+    res.json({ message: 'Xóa đơn mua hàng thành công' });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
+// Xóa Đơn bán hàng (SO)
+router.delete('/sales/:id', async (req, res) => {
+  const conn = await getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query('SELECT status FROM sales_orders WHERE id = ?', [req.params.id]);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Không tìm thấy đơn bán hàng' });
+    }
+    if (rows[0].status === 'DELIVERED') {
+      await conn.rollback();
+      return res.status(400).json({ error: 'Không thể xóa đơn bán hàng đã xuất kho giao khách' });
+    }
+
+    await conn.query('DELETE FROM sales_order_items WHERE order_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM sales_orders WHERE id = ?', [req.params.id]);
+
+    await conn.commit();
+    res.json({ message: 'Xóa đơn bán hàng thành công' });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 module.exports = router;

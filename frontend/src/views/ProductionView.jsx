@@ -80,6 +80,17 @@ export default function ProductionView({ onOpenTraceModal }) {
     }
   };
 
+  const handleDeleteOrder = async (order) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy / xóa Lệnh sản xuất "${order.code}"?`)) return;
+    try {
+      await fetchApi(`/production/orders/${order.id}`, { method: 'DELETE' });
+      if (selectedOrder?.id === order.id) setSelectedOrder(null);
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleAllocateMaterials = async () => {
     if (!selectedOrder) return;
     if (!window.confirm(`Xác nhận cấp phát nguyên vật liệu từ Kho NVL sang Xưởng sản xuất cho lệnh [${selectedOrder.code}]?`)) return;
@@ -228,12 +239,23 @@ export default function ProductionView({ onOpenTraceModal }) {
               >
                 <div className="flex justify-between items-start">
                   <div className="font-mono text-xs font-bold text-blue-700">{ord.code}</div>
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                    ord.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
-                    ord.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
-                  }`}>
-                    {ord.status === 'COMPLETED' ? 'Hoàn thành' : ord.status === 'IN_PROGRESS' ? 'Đang chạy' : 'Nháp'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                      ord.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
+                      ord.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {ord.status === 'COMPLETED' ? 'Hoàn thành' : ord.status === 'IN_PROGRESS' ? 'Đang chạy' : 'Nháp'}
+                    </span>
+                    {ord.status !== 'COMPLETED' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteOrder(ord); }}
+                        className="p-1 hover:bg-red-50 text-red-400 hover:text-red-600 rounded transition-colors"
+                        title="Hủy / Xóa LSX"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="font-semibold text-slate-800 text-sm mt-1">{ord.target_item_name}</div>
                 <div className="text-xs text-slate-500 mt-1 flex justify-between">
@@ -286,13 +308,19 @@ export default function ProductionView({ onOpenTraceModal }) {
                           setFinishForm({
                             actualQty: selectedOrder.planned_qty,
                             defectiveQty: 0,
-                            note: ''
+                            note: 'Nhập kho hoàn thành sản xuất'
                           });
                           setShowFinishModal(true);
                         }}
                         className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded shadow-sm"
                       >
                         Nhập kho hoàn thành
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOrder(selectedOrder)}
+                        className="px-3 py-1.5 text-xs bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded border border-red-200"
+                      >
+                        Hủy lệnh
                       </button>
                     </>
                   )}

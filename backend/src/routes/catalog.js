@@ -72,6 +72,14 @@ router.put('/items/:id', async (req, res) => {
 
 router.delete('/items/:id', async (req, res) => {
   try {
+    const [stk] = await query('SELECT COUNT(*) as count FROM stock WHERE item_id = ? AND quantity > 0', [req.params.id]);
+    if (stk && stk.count > 0) {
+      return res.status(400).json({ error: 'Không thể xóa mặt hàng đang có số lượng tồn kho > 0' });
+    }
+    const [bom] = await query('SELECT COUNT(*) as count FROM bom_items WHERE item_id = ?', [req.params.id]);
+    if (bom && bom.count > 0) {
+      return res.status(400).json({ error: 'Không thể xóa mặt hàng đang được sử dụng trong Định mức BOM' });
+    }
     await query('DELETE FROM items WHERE id = ?', [req.params.id]);
     res.json({ message: 'Xóa mặt hàng thành công' });
   } catch (err) {
@@ -99,6 +107,36 @@ router.post('/warehouses', async (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `, [id, code, name, type, location]);
     res.status(201).json({ id, code, name, type, location });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/warehouses/:id', async (req, res) => {
+  try {
+    const { code, name, type, location } = req.body;
+    await query(`
+      UPDATE warehouses 
+      SET code = COALESCE(?, code),
+          name = COALESCE(?, name),
+          type = COALESCE(?, type),
+          location = COALESCE(?, location)
+      WHERE id = ?
+    `, [code, name, type, location, req.params.id]);
+    res.json({ message: 'Cập nhật thông tin kho thành công' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/warehouses/:id', async (req, res) => {
+  try {
+    const [stk] = await query('SELECT COUNT(*) as count FROM stock WHERE warehouse_id = ? AND quantity > 0', [req.params.id]);
+    if (stk && stk.count > 0) {
+      return res.status(400).json({ error: 'Không thể xóa kho đang còn chứa hàng hóa tồn kho' });
+    }
+    await query('DELETE FROM warehouses WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Xóa kho thành công' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -132,6 +170,39 @@ router.post('/partners', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `, [id, code, name, type, phone, address, debt]);
     res.status(201).json({ id, code, name, type, phone, address, debt });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/partners/:id', async (req, res) => {
+  try {
+    const { code, name, type, phone, address, debt } = req.body;
+    await query(`
+      UPDATE partners 
+      SET code = COALESCE(?, code),
+          name = COALESCE(?, name),
+          type = COALESCE(?, type),
+          phone = COALESCE(?, phone),
+          address = COALESCE(?, address),
+          debt = COALESCE(?, debt)
+      WHERE id = ?
+    `, [code, name, type, phone, address, debt, req.params.id]);
+    res.json({ message: 'Cập nhật đối tác thành công' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/partners/:id', async (req, res) => {
+  try {
+    const [po] = await query('SELECT COUNT(*) as count FROM purchase_orders WHERE partner_id = ?', [req.params.id]);
+    const [so] = await query('SELECT COUNT(*) as count FROM sales_orders WHERE partner_id = ?', [req.params.id]);
+    if ((po && po.count > 0) || (so && so.count > 0)) {
+      return res.status(400).json({ error: 'Không thể xóa đối tác đã phát sinh Đơn mua hàng (PO) hoặc Đơn bán hàng (SO)' });
+    }
+    await query('DELETE FROM partners WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Xóa đối tác thành công' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

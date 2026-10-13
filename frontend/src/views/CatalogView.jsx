@@ -11,6 +11,8 @@ export default function CatalogView() {
   const [typeFilter, setTypeFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
 
+  const [editingId, setEditingId] = useState(null);
+
   // Form states
   const [itemForm, setItemForm] = useState({
     code: '',
@@ -69,12 +71,40 @@ export default function CatalogView() {
   const handleSaveItem = async (e) => {
     e.preventDefault();
     try {
-      await fetchApi('/catalog/items', {
-        method: 'POST',
+      const endpoint = editingId ? `/catalog/items/${editingId}` : '/catalog/items';
+      const method = editingId ? 'PUT' : 'POST';
+      await fetchApi(endpoint, {
+        method,
         body: JSON.stringify(itemForm)
       });
       setShowModal(false);
+      setEditingId(null);
       setItemForm({ code: '', name: '', type: 'NVL', category_id: '', unit: 'Kg', cost_price: 0, sale_price: 0, min_stock: 0 });
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleEditItem = (it) => {
+    setEditingId(it.id);
+    setItemForm({
+      code: it.code,
+      name: it.name,
+      type: it.type,
+      category_id: it.category_id || '',
+      unit: it.unit,
+      cost_price: it.cost_price || 0,
+      sale_price: it.sale_price || 0,
+      min_stock: it.min_stock || 0
+    });
+    setShowModal(true);
+  };
+
+  const handleDeleteItem = async (it) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa mặt hàng "${it.name}" (${it.code}) không?`)) return;
+    try {
+      await fetchApi(`/catalog/items/${it.id}`, { method: 'DELETE' });
       loadData();
     } catch (err) {
       alert(err.message);
@@ -84,12 +114,38 @@ export default function CatalogView() {
   const handleSavePartner = async (e) => {
     e.preventDefault();
     try {
-      await fetchApi('/catalog/partners', {
-        method: 'POST',
+      const endpoint = editingId ? `/catalog/partners/${editingId}` : '/catalog/partners';
+      const method = editingId ? 'PUT' : 'POST';
+      await fetchApi(endpoint, {
+        method,
         body: JSON.stringify(partnerForm)
       });
       setShowModal(false);
+      setEditingId(null);
       setPartnerForm({ code: '', name: '', type: 'CUSTOMER', phone: '', address: '', debt: 0 });
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleEditPartner = (p) => {
+    setEditingId(p.id);
+    setPartnerForm({
+      code: p.code,
+      name: p.name,
+      type: p.type,
+      phone: p.phone || '',
+      address: p.address || '',
+      debt: p.debt || 0
+    });
+    setShowModal(true);
+  };
+
+  const handleDeletePartner = async (p) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa đối tác "${p.name}" (${p.code}) không?`)) return;
+    try {
+      await fetchApi(`/catalog/partners/${p.id}`, { method: 'DELETE' });
       loadData();
     } catch (err) {
       alert(err.message);
@@ -99,12 +155,36 @@ export default function CatalogView() {
   const handleSaveWarehouse = async (e) => {
     e.preventDefault();
     try {
-      await fetchApi('/catalog/warehouses', {
-        method: 'POST',
+      const endpoint = editingId ? `/catalog/warehouses/${editingId}` : '/catalog/warehouses';
+      const method = editingId ? 'PUT' : 'POST';
+      await fetchApi(endpoint, {
+        method,
         body: JSON.stringify(whForm)
       });
       setShowModal(false);
+      setEditingId(null);
       setWhForm({ code: '', name: '', type: 'NVL', location: '' });
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleEditWarehouse = (w) => {
+    setEditingId(w.id);
+    setWhForm({
+      code: w.code,
+      name: w.name,
+      type: w.type,
+      location: w.location || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleDeleteWarehouse = async (w) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa kho "${w.name}" (${w.code}) không?`)) return;
+    try {
+      await fetchApi(`/catalog/warehouses/${w.id}`, { method: 'DELETE' });
       loadData();
     } catch (err) {
       alert(err.message);
@@ -120,7 +200,13 @@ export default function CatalogView() {
           <p className="text-sm text-slate-500 mt-1">Quản lý hàng hóa, kho bãi và danh sách khách hàng, nhà cung cấp</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingId(null);
+            setItemForm({ code: '', name: '', type: 'NVL', category_id: '', unit: 'Cái', cost_price: 0, sale_price: 0, min_stock: 0 });
+            setPartnerForm({ code: '', name: '', type: 'CUSTOMER', phone: '', address: '', debt: 0 });
+            setWhForm({ code: '', name: '', type: 'NVL', location: '' });
+            setShowModal(true);
+          }}
           className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
         >
           + Thêm mới {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
@@ -210,6 +296,7 @@ export default function CatalogView() {
                 <th className="p-3 text-right">Giá vốn (kế hoạch)</th>
                 <th className="p-3 text-right">Giá bán</th>
                 <th className="p-3 text-right">Tồn tối thiểu</th>
+                <th className="p-3 text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -229,6 +316,24 @@ export default function CatalogView() {
                   <td className="p-3 text-right font-medium">{formatMoney(it.cost_price)}</td>
                   <td className="p-3 text-right font-medium">{it.sale_price > 0 ? formatMoney(it.sale_price) : '-'}</td>
                   <td className="p-3 text-right text-slate-600">{formatNumber(it.min_stock)}</td>
+                  <td className="p-3 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button 
+                        onClick={() => handleEditItem(it)}
+                        className="p-1 hover:bg-blue-50 text-blue-600 rounded transition-colors"
+                        title="Sửa mặt hàng"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteItem(it)}
+                        className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                        title="Xóa mặt hàng"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -246,6 +351,7 @@ export default function CatalogView() {
                 <th className="p-3">Tên kho</th>
                 <th className="p-3">Loại kho</th>
                 <th className="p-3">Vị trí thực tế</th>
+                <th className="p-3 text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -259,6 +365,24 @@ export default function CatalogView() {
                     </span>
                   </td>
                   <td className="p-3 text-slate-600">{w.location || '-'}</td>
+                  <td className="p-3 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button 
+                        onClick={() => handleEditWarehouse(w)}
+                        className="p-1 hover:bg-blue-50 text-blue-600 rounded transition-colors"
+                        title="Sửa kho"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteWarehouse(w)}
+                        className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                        title="Xóa kho"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -278,6 +402,7 @@ export default function CatalogView() {
                 <th className="p-3">Điện thoại</th>
                 <th className="p-3">Địa chỉ</th>
                 <th className="p-3 text-right">Số dư công nợ</th>
+                <th className="p-3 text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -297,6 +422,24 @@ export default function CatalogView() {
                   <td className={`p-3 text-right font-bold ${p.debt > 0 ? (p.type === 'CUSTOMER' ? 'text-emerald-700' : 'text-rose-700') : 'text-slate-500'}`}>
                     {formatMoney(p.debt)}
                   </td>
+                  <td className="p-3 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button 
+                        onClick={() => handleEditPartner(p)}
+                        className="p-1 hover:bg-blue-50 text-blue-600 rounded transition-colors"
+                        title="Sửa đối tác"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button 
+                        onClick={() => handleDeletePartner(p)}
+                        className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                        title="Xóa đối tác"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -304,12 +447,12 @@ export default function CatalogView() {
         </div>
       )}
 
-      {/* Modal Thêm mới */}
+      {/* Modal Thêm mới / Cập nhật */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-lg w-full p-6 shadow-xl space-y-4">
             <h3 className="text-lg font-bold text-slate-800 border-b pb-2">
-              Thêm mới {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
+              {editingId ? 'Chỉnh sửa' : 'Thêm mới'} {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
             </h3>
 
             {tab === 'items' && (
@@ -395,7 +538,7 @@ export default function CatalogView() {
                     type="submit"
                     className="px-4 py-2 bg-blue-700 text-white rounded text-sm font-semibold hover:bg-blue-800"
                   >
-                    Lưu mặt hàng
+                    {editingId ? 'Cập nhật mặt hàng' : 'Lưu mặt hàng'}
                   </button>
                 </div>
               </form>
@@ -468,7 +611,7 @@ export default function CatalogView() {
                     type="submit"
                     className="px-4 py-2 bg-blue-700 text-white rounded text-sm font-semibold hover:bg-blue-800"
                   >
-                    Lưu đối tác
+                    {editingId ? 'Cập nhật đối tác' : 'Lưu đối tác'}
                   </button>
                 </div>
               </form>
@@ -532,7 +675,7 @@ export default function CatalogView() {
                     type="submit"
                     className="px-4 py-2 bg-blue-700 text-white rounded text-sm font-semibold hover:bg-blue-800"
                   >
-                    Lưu kho
+                    {editingId ? 'Cập nhật kho' : 'Lưu kho'}
                   </button>
                 </div>
               </form>

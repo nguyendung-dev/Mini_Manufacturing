@@ -355,4 +355,33 @@ router.post('/orders/:id/finish', async (req, res) => {
   }
 });
 
+// Xóa Lệnh sản xuất (LSX)
+router.delete('/orders/:id', async (req, res) => {
+  const conn = await getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query('SELECT status FROM production_orders WHERE id = ?', [req.params.id]);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ error: 'Không tìm thấy Lệnh sản xuất' });
+    }
+    if (rows[0].status === 'COMPLETED') {
+      await conn.rollback();
+      return res.status(400).json({ error: 'Không thể xóa Lệnh sản xuất đã hoàn thành và nhập kho thành phẩm' });
+    }
+
+    await conn.query('DELETE FROM production_stages WHERE production_order_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM production_allocations WHERE production_order_id = ?', [req.params.id]);
+    await conn.query('DELETE FROM production_orders WHERE id = ?', [req.params.id]);
+
+    await conn.commit();
+    res.json({ message: 'Xóa Lệnh sản xuất thành công' });
+  } catch (err) {
+    await conn.rollback();
+    res.status(500).json({ error: err.message });
+  } finally {
+    conn.release();
+  }
+});
+
 module.exports = router;
