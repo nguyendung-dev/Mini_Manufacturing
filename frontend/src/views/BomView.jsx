@@ -203,7 +203,7 @@ export default function BomView() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                ← Quay lại danh sách định mức
+                Quay lại danh sách định mức
               </button>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
