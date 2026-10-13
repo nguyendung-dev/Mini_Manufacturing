@@ -12,6 +12,7 @@ export default function InventoryView({ onOpenTraceModal }) {
   const [typeFilter, setTypeFilter] = useState('');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [txTab, setTxTab] = useState('ALL'); // ALL | IN | OUT | TRANSFER
 
   // Form tạo phiếu kho mới
   const [txForm, setTxForm] = useState({
@@ -25,6 +26,26 @@ export default function InventoryView({ onOpenTraceModal }) {
     note: '',
     items: [{ item_id: '', lot_number: '', qty: 1, price: 0 }]
   });
+
+  const handleOpenCreateModal = (defaultType) => {
+    let targetType = defaultType || 'IN_PURCHASE';
+    if (txTab === 'IN') targetType = 'IN_PURCHASE';
+    else if (txTab === 'OUT') targetType = 'OUT_SALE';
+    else if (txTab === 'TRANSFER') targetType = 'TRANSFER';
+
+    setTxForm({
+      code: '',
+      date: new Date().toISOString().split('T')[0],
+      type: targetType,
+      status: 'DRAFT',
+      source_warehouse_id: (targetType.startsWith('OUT') || targetType === 'TRANSFER') ? (warehouses[0]?.id || '') : '',
+      dest_warehouse_id: (targetType.startsWith('IN') || targetType === 'TRANSFER') ? (warehouses[1]?.id || warehouses[0]?.id || '') : '',
+      ref_code: '',
+      note: '',
+      items: [{ item_id: items[0]?.id || '', lot_number: '', qty: 1, price: 0 }]
+    });
+    setShowCreateModal(true);
+  };
 
   const loadData = async () => {
     try {
@@ -187,42 +208,57 @@ export default function InventoryView({ onOpenTraceModal }) {
         </button>
       </div>
 
-      {/* Bộ lọc cho Tab Tồn kho */}
+      {/* Bộ lọc và 3 Tab Kho cho Tab Tồn kho */}
       {subTab === 'stock' && (
-        <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
-          <div className="flex-1 max-w-sm">
-            <input
-              type="text"
-              placeholder="Tìm mã hàng, tên hàng hoặc số lô..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full text-sm px-3 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-blue-600"
-            />
+        <div className="space-y-3">
+          {/* Tabs 3 kho */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setSelectedWh('')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                !selectedWh ? 'bg-slate-900 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Tất cả kho ({stockList.length})
+            </button>
+            {warehouses.map(w => (
+              <button
+                key={w.id}
+                type="button"
+                onClick={() => setSelectedWh(w.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
+                  selectedWh === w.id ? 'bg-slate-900 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {w.name} ({w.code})
+              </button>
+            ))}
           </div>
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs text-slate-500 font-medium">Kho:</span>
-            <select
-              value={selectedWh}
-              onChange={(e) => setSelectedWh(e.target.value)}
-              className="text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none"
-            >
-              <option value="">Tất cả kho</option>
-              {warehouses.map(w => (
-                <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
-              ))}
-            </select>
 
-            <span className="text-xs text-slate-500 font-medium ml-2">Loại:</span>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none"
-            >
-              <option value="">Tất cả loại</option>
-              <option value="NVL">NVL</option>
-              <option value="BTP">Bán thành phẩm (BTP)</option>
-              <option value="TP">Thành phẩm (TP)</option>
-            </select>
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex-1 max-w-sm">
+              <input
+                type="text"
+                placeholder="Tìm mã hàng, tên hàng hoặc số lô..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-slate-500 font-medium">Phân loại:</span>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="text-xs px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400"
+              >
+                <option value="">Tất cả loại</option>
+                <option value="NVL">Nguyên vật liệu (NVL)</option>
+                <option value="BTP">Bán thành phẩm (BTP)</option>
+                <option value="TP">Thành phẩm (TP)</option>
+              </select>
+            </div>
           </div>
         </div>
       )}
@@ -287,6 +323,66 @@ export default function InventoryView({ onOpenTraceModal }) {
         </div>
       )}
 
+      {/* 3 Tabs Phân loại Phiếu kho & Nút Thêm tương ứng */}
+      {subTab === 'transactions' && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setTxTab('ALL')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                txTab === 'ALL' ? 'bg-slate-900 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Tất cả ({transactions.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTxTab('IN')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                txTab === 'IN' ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Phiếu nhập kho ({transactions.filter(t => t.type?.startsWith('IN')).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTxTab('OUT')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                txTab === 'OUT' ? 'bg-blue-700 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Phiếu xuất kho ({transactions.filter(t => t.type?.startsWith('OUT')).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTxTab('TRANSFER')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                txTab === 'TRANSFER' ? 'bg-indigo-700 text-white shadow-2xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              Phiếu chuyển kho ({transactions.filter(t => t.type === 'TRANSFER' || t.type === 'ADJUST').length})
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleOpenCreateModal()}
+            className={`px-3.5 py-1.5 text-xs font-medium rounded-md shadow-2xs text-white transition-colors ${
+              txTab === 'IN' ? 'bg-emerald-700 hover:bg-emerald-800' :
+              txTab === 'OUT' ? 'bg-blue-700 hover:bg-blue-800' :
+              txTab === 'TRANSFER' ? 'bg-indigo-700 hover:bg-indigo-800' :
+              'bg-slate-900 hover:bg-slate-800'
+            }`}
+          >
+            {txTab === 'IN' ? '+ Thêm phiếu nhập' :
+             txTab === 'OUT' ? '+ Thêm phiếu xuất' :
+             txTab === 'TRANSFER' ? '+ Thêm phiếu chuyển' :
+             '+ Lập phiếu kho'}
+          </button>
+        </div>
+      )}
+
       {/* Bảng chứng từ kho */}
       {subTab === 'transactions' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
@@ -304,7 +400,14 @@ export default function InventoryView({ onOpenTraceModal }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {transactions.map(tx => (
+              {transactions
+                .filter(t => {
+                  if (txTab === 'IN') return t.type?.startsWith('IN');
+                  if (txTab === 'OUT') return t.type?.startsWith('OUT');
+                  if (txTab === 'TRANSFER') return t.type === 'TRANSFER' || t.type === 'ADJUST';
+                  return true;
+                })
+                .map(tx => (
                 <tr key={tx.id} className="hover:bg-slate-50">
                   <td className="p-3 font-mono text-xs font-bold text-blue-700">{tx.code}</td>
                   <td className="p-3 text-xs text-slate-600">

@@ -191,84 +191,161 @@ export default function BomView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Định mức kỹ thuật (BOM) & Nhu cầu vật tư</h2>
+          <h2 className="text-xl font-bold text-slate-900">Gia Công</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Thiết lập BOM đa cấp cho Thành phẩm/Bán thành phẩm, hỗ trợ tỷ lệ hao hụt và tính nhu cầu NVL
+            Thiết lập định mức gia công, cấu thành linh kiện vật tư và tỷ lệ hao hụt cho sản phẩm
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
+          className="px-4 py-2 bg-slate-900 text-white rounded-md font-medium hover:bg-slate-800 shadow-sm text-xs transition-colors"
         >
-          + Tạo định mức BOM mới
+          + Thêm mới
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Danh sách BOMs bên trái (4 cols) */}
-        <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Danh sách định mức đã duyệt</h3>
-          <div className="space-y-2">
-            {boms.map(b => (
-              <div
-                key={b.id}
-                onClick={() => setSelectedBom(b)}
-                className={`p-3 rounded border cursor-pointer transition-colors ${
-                  selectedBom?.id === b.id
-                    ? 'border-blue-700 bg-blue-50/50'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="font-mono text-xs font-bold text-blue-700">{b.code}</div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-semibold">
-                      v{b.version}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteBom(b); }}
-                      className="p-1 hover:bg-red-50 text-red-400 hover:text-red-600 rounded transition-colors"
-                      title="Xóa định mức BOM"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
-                  </div>
-                </div>
-                <div className="font-semibold text-slate-800 text-sm mt-1">{b.name}</div>
-                <div className="text-xs text-slate-500 mt-1">
-                  Mục tiêu: <strong>{b.target_item_name}</strong>
-                </div>
-                <div className="text-xs text-slate-600 mt-2 flex justify-between border-t border-slate-100 pt-1.5">
-                  <span>Số linh kiện: {b.components?.length || 0}</span>
-                  <span>Ước tính: <strong className="text-emerald-700">{formatMoney(b.estimatedCost)}</strong></span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Bảng danh sách định mức Gia Công (Nằm ngang full width) */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">
+            Danh sách định mức gia công ({boms.length})
+          </h3>
+          <span className="text-xs text-slate-400">
+            Nhấp vào dòng để xem chi tiết 2 bảng bên dưới
+          </span>
         </div>
 
-        {/* Chi tiết BOM & Máy tính nhu cầu vật tư MRP (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          {selectedBom && (
-            <>
-              {/* Chi tiết thành phần cấu thành */}
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-800">
-                      Chi tiết cấu thành BOM: <span className="text-blue-700">{selectedBom.name}</span>
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Định mức tính cho <strong>{selectedBom.standard_qty} {selectedBom.target_item_unit}</strong> thành phẩm
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-slate-500">Giá thành kế hoạch chuẩn</div>
-                    <div className="text-sm font-bold text-emerald-700">{formatMoney(selectedBom.estimatedCost)}</div>
-                  </div>
-                </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left whitespace-nowrap">
+            <thead className="text-[11px] uppercase bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+              <tr>
+                <th className="p-3">Mã định mức</th>
+                <th className="p-3">Tên định mức gia công</th>
+                <th className="p-3">Sản phẩm / BTP mục tiêu</th>
+                <th className="p-3 text-center">Phiên bản</th>
+                <th className="p-3 text-right">Sản lượng chuẩn</th>
+                <th className="p-3 text-center">Số linh kiện</th>
+                <th className="p-3 text-right">Giá thành kế hoạch</th>
+                <th className="p-3 text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {boms.length > 0 ? (
+                boms.map((b) => {
+                  const isSelected = selectedBom?.id === b.id;
+                  return (
+                    <tr
+                      key={b.id}
+                      onClick={() => setSelectedBom(b)}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected ? 'bg-blue-50/70 font-medium' : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <td className="p-3 font-mono font-semibold text-blue-700">
+                        {b.code}
+                      </td>
+                      <td className="p-3 font-medium text-slate-900">
+                        {b.name}
+                      </td>
+                      <td className="p-3 text-slate-700">
+                        {b.target_item_name}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-700">
+                          v{b.version}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right text-slate-700">
+                        {b.standard_qty} {b.target_item_unit}
+                      </td>
+                      <td className="p-3 text-center font-semibold text-slate-700">
+                        {b.components?.length || 0}
+                      </td>
+                      <td className="p-3 text-right font-bold text-emerald-700">
+                        {formatMoney(b.estimatedCost)}
+                      </td>
+                      <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBom(b)}
+                            className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                              isSelected
+                                ? 'bg-blue-700 text-white border-blue-700 font-semibold'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {isSelected ? 'Đang xem' : 'Chi tiết'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBom(b)}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Xóa định mức"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400 text-xs">
+                    Chưa có định mức gia công nào. Bấm "+ Thêm mới" để tạo.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                <div className="overflow-x-auto">
+      {/* KHU VỰC CHI TIẾT 2 BẢNG (FULL WIDTH NẰM NGANG) */}
+      {selectedBom && (
+        <div className="space-y-6 pt-2">
+          {/* Header chi tiết */}
+          <div className="flex items-center justify-between bg-slate-100/80 p-3 rounded-lg border border-slate-200">
+            <div>
+              <span className="text-xs text-slate-500 font-normal">Đang xem chi tiết định mức:</span>
+              <div className="text-sm font-bold text-slate-900 flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-blue-700">[{selectedBom.code}]</span>
+                <span>{selectedBom.name}</span>
+                <span className="text-xs font-normal text-slate-500">
+                  (Mục tiêu: {selectedBom.target_item_name} - {selectedBom.standard_qty} {selectedBom.target_item_unit})
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedBom(null)}
+              className="text-xs px-2.5 py-1 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md bg-white hover:bg-slate-50"
+            >
+              ✕ Đóng chi tiết
+            </button>
+          </div>
+
+          {/* Bảng 1: Chi tiết thành phần cấu thành BOM */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="p-4 bg-slate-50/70 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">
+                  Bảng 1: Chi tiết cấu thành định mức
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Định mức vật tư tính cho <strong>{selectedBom.standard_qty} {selectedBom.target_item_unit}</strong> thành phẩm
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-slate-500">Giá thành kế hoạch chuẩn: </span>
+                <strong className="text-sm font-bold text-emerald-700">{formatMoney(selectedBom.estimatedCost)}</strong>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
                       <tr>
@@ -397,10 +474,8 @@ export default function BomView() {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
-        </div>
-      </div>
 
       {/* Modal Tạo mới BOM */}
       {showCreateModal && (

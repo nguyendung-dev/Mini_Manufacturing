@@ -231,67 +231,157 @@ export default function ProductionView({ onOpenTraceModal, targetOrderId }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Danh sách LSX (4 cols) */}
-        <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Danh sách lệnh sản xuất</h3>
-          <div className="space-y-2">
-            {orders.map(ord => (
-              <div
-                key={ord.id}
-                onClick={() => setSelectedOrder(ord)}
-                className={`p-3 rounded border cursor-pointer transition-colors ${
-                  selectedOrder?.id === ord.id
-                    ? 'border-blue-700 bg-blue-50/50'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="font-mono text-xs font-bold text-blue-700">{ord.code}</div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
-                      ord.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                      ord.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${ord.status === 'COMPLETED' ? 'bg-emerald-500' : ord.status === 'IN_PROGRESS' ? 'bg-amber-500' : 'bg-slate-400'}`}></span>
-                      {ord.status === 'COMPLETED' ? 'Hoàn thành' : ord.status === 'IN_PROGRESS' ? 'Đang chạy' : 'Nháp'}
-                    </span>
-                    {ord.status !== 'COMPLETED' && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteOrder(ord); }}
-                        className="p-1 hover:bg-red-50 text-red-400 hover:text-red-600 rounded transition-colors"
-                        title="Hủy / Xóa LSX"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="font-semibold text-slate-800 text-sm mt-1">{ord.target_item_name}</div>
-                <div className="text-xs text-slate-500 mt-1 flex justify-between">
-                  <span>Kế hoạch: <strong>{formatNumber(ord.planned_qty)} {ord.target_item_unit}</strong></span>
-                  <span>Đã đạt: <strong className="text-emerald-700">{formatNumber(ord.actual_qty)}</strong></span>
-                </div>
-                <div className="text-xs text-slate-600 mt-2 flex justify-between border-t border-slate-100 pt-1.5 items-center">
-                  <span className="font-mono text-slate-500">Lô: {ord.lot_number}</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-16 bg-slate-200 rounded-full h-1.5">
-                      <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${ord.progressPercent || 0}%` }}></div>
-                    </div>
-                    <span className="font-semibold text-slate-700">{ord.progressPercent || 0}%</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Bảng danh sách Lệnh sản xuất (Full Width nằm ngang) */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">
+            Danh sách lệnh sản xuất ({orders.length})
+          </h3>
+          <span className="text-xs text-slate-400">
+            Nhấp vào dòng để xem chi tiết tiến độ công đoạn & cấp phát vật tư
+          </span>
         </div>
 
-        {/* Chi tiết lệnh sản xuất được chọn (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
-          {selectedOrder && (
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-5 space-y-6">
-              {/* Top Banner chi tiết lệnh sản xuất */}
-              <div className="border-b border-slate-200 pb-4 space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left whitespace-nowrap">
+            <thead className="text-[11px] uppercase bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+              <tr>
+                <th className="p-3">Mã lệnh</th>
+                <th className="p-3">Sản phẩm sản xuất</th>
+                <th className="p-3">Định mức áp dụng</th>
+                <th className="p-3">Ngày lập</th>
+                <th className="p-3 text-right">Kế hoạch</th>
+                <th className="p-3 text-right">Đã đạt</th>
+                <th className="p-3">Số lô (Lot No.)</th>
+                <th className="p-3">Tiến độ</th>
+                <th className="p-3 text-center">Trạng thái</th>
+                <th className="p-3 text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {orders.length > 0 ? (
+                orders.map((ord) => {
+                  const isSelected = selectedOrder?.id === ord.id;
+                  return (
+                    <tr
+                      key={ord.id}
+                      onClick={() => setSelectedOrder(ord)}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected ? 'bg-blue-50/70 font-medium' : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <td className="p-3 font-mono font-semibold text-blue-700">
+                        {ord.code}
+                      </td>
+                      <td className="p-3">
+                        <div className="font-semibold text-slate-900">{ord.target_item_name}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">{ord.target_item_code}</div>
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {ord.bom_name ? `${ord.bom_name} (${ord.bom_code})` : '-'}
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {new Date(ord.date).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="p-3 text-right font-bold text-slate-800">
+                        {formatNumber(ord.planned_qty)} {ord.target_item_unit}
+                      </td>
+                      <td className="p-3 text-right font-bold text-emerald-700">
+                        {formatNumber(ord.actual_qty)} {ord.target_item_unit}
+                      </td>
+                      <td className="p-3 font-mono font-semibold text-slate-700">
+                        {ord.lot_number}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-blue-600 h-1.5 rounded-full transition-all"
+                              style={{ width: `${ord.progressPercent || 0}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[11px] text-slate-600">{ord.progressPercent || 0}%</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={`px-2 py-0.5 text-xs rounded font-medium ${
+                          ord.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          ord.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {ord.status === 'COMPLETED' ? 'Hoàn thành' :
+                           ord.status === 'IN_PROGRESS' ? 'Đang chạy' : 'Bản nháp'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrder(ord)}
+                            className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                              isSelected
+                                ? 'bg-blue-700 text-white border-blue-700 font-semibold'
+                                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {isSelected ? 'Đang xem' : 'Chi tiết'}
+                          </button>
+                          {ord.status !== 'COMPLETED' && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOrder(ord)}
+                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Hủy / Xóa lệnh sản xuất"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={10} className="p-8 text-center text-slate-400 text-xs">
+                    Chưa có lệnh sản xuất nào. Bấm "+ Lập Lệnh sản xuất mới" để tạo.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* KHU VỰC CHI TIẾT LỆNH SẢN XUẤT (FULL WIDTH NẰM NGANG) */}
+      {selectedOrder && (
+        <div className="space-y-4 pt-2">
+          {/* Header chi tiết có nút đóng */}
+          <div className="flex items-center justify-between bg-slate-100/80 p-3 rounded-lg border border-slate-200">
+            <div>
+              <span className="text-xs text-slate-500">Đang xem chi tiết Lệnh sản xuất:</span>
+              <div className="text-sm font-bold text-slate-900 flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-blue-700">[{selectedOrder.code}]</span>
+                <span>{selectedOrder.target_item_name}</span>
+                <span className="font-mono text-xs px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded">
+                  Lô: {selectedOrder.lot_number}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedOrder(null)}
+              className="text-xs px-2.5 py-1 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md bg-white hover:bg-slate-50 transition-colors"
+            >
+              ✕ Đóng chi tiết
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-5 space-y-6">
+            {/* Top Banner chi tiết lệnh sản xuất */}
+            <div className="border-b border-slate-200 pb-4 space-y-3">
                 {/* Hàng 1: Mã lệnh, Số lô, Trạng thái & Các nút thao tác */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5 flex-wrap">
@@ -466,9 +556,8 @@ export default function ProductionView({ onOpenTraceModal, targetOrderId }) {
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
       {/* Modal Lập Lệnh sản xuất mới */}
       {showCreateModal && (
