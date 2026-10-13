@@ -46,20 +46,16 @@ export default function CatalogView() {
   const loadData = async () => {
     try {
       if (tab === 'items') {
-        const query = new URLSearchParams();
-        if (search) query.append('search', search);
-        if (typeFilter) query.append('type', typeFilter);
-        const res = await fetchApi(`/catalog/items?${query.toString()}`);
-        setItems(res);
+        const res = await fetchApi('/catalog/items');
+        setItems(res || []);
         const cats = await fetchApi('/catalog/categories');
-        setCategories(cats);
+        setCategories(cats || []);
       } else if (tab === 'warehouses') {
         const res = await fetchApi('/catalog/warehouses');
-        setWarehouses(res);
+        setWarehouses(res || []);
       } else if (tab === 'partners') {
-        const query = typeFilter ? `?type=${typeFilter}` : '';
-        const res = await fetchApi(`/catalog/partners${query}`);
-        setPartners(res);
+        const res = await fetchApi('/catalog/partners');
+        setPartners(res || []);
       }
     } catch (err) {
       console.error(err);
@@ -68,7 +64,33 @@ export default function CatalogView() {
 
   useEffect(() => {
     loadData();
-  }, [tab, search, typeFilter]);
+  }, [tab]);
+
+  // Bộ lọc hiển thị hàng hóa NVL - BTP - TP
+  const displayedItems = React.useMemo(() => {
+    return items.filter(it => {
+      const matchType = !typeFilter || it.type === typeFilter;
+      const matchSearch = !search ||
+        it.code?.toLowerCase().includes(search.toLowerCase()) ||
+        it.name?.toLowerCase().includes(search.toLowerCase());
+      return matchType && matchSearch;
+    });
+  }, [items, typeFilter, search]);
+
+  const countNVL = items.filter(i => i.type === 'NVL').length;
+  const countBTP = items.filter(i => i.type === 'BTP').length;
+  const countTP = items.filter(i => i.type === 'TP').length;
+
+  const displayedPartners = React.useMemo(() => {
+    return partners.filter(p => {
+      const matchType = !typeFilter || p.type === typeFilter;
+      const matchSearch = !search ||
+        p.code?.toLowerCase().includes(search.toLowerCase()) ||
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.phone?.toLowerCase().includes(search.toLowerCase());
+      return matchType && matchSearch;
+    });
+  }, [partners, typeFilter, search]);
 
   const handleSaveItem = async (e) => {
     e.preventDefault();
@@ -243,14 +265,28 @@ export default function CatalogView() {
           <button
             onClick={() => {
               setEditingId(null);
-              setItemForm({ code: '', name: '', type: 'NVL', category_id: '', unit: 'Cái', cost_price: 0, sale_price: 0, min_stock: 0 });
+              const defaultType = tab === 'items' && typeFilter ? typeFilter : 'NVL';
+              setItemForm({
+                code: '',
+                name: '',
+                type: defaultType,
+                category_id: '',
+                unit: defaultType === 'NVL' ? 'Kg' : 'Cái',
+                cost_price: 0,
+                sale_price: 0,
+                min_stock: 0
+              });
               setPartnerForm({ code: '', name: '', type: 'CUSTOMER', phone: '', address: '', debt: 0 });
               setWhForm({ code: '', name: '', type: 'NVL', location: '' });
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
+            className="px-4 py-2 bg-slate-900 text-white rounded-md font-medium hover:bg-slate-800 shadow-sm text-xs transition-colors"
           >
-            + Thêm mới {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
+            + Thêm mới {
+              tab === 'items'
+                ? (typeFilter === 'NVL' ? 'NVL' : typeFilter === 'BTP' ? 'BTP' : typeFilter === 'TP' ? 'Thành phẩm' : 'mặt hàng')
+                : tab === 'warehouses' ? 'kho bãi' : 'đối tác'
+            }
           </button>
         </div>
       </div>
@@ -283,39 +319,89 @@ export default function CatalogView() {
         </button>
       </div>
 
+      {/* 3 Tabs phân loại hàng hóa NVL - BTP - TP */}
+      {tab === 'items' && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setTypeFilter('')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              typeFilter === ''
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Tất cả ({items.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTypeFilter('NVL')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
+              typeFilter === 'NVL'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            Nguyên vật liệu (NVL) ({countNVL})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTypeFilter('BTP')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
+              typeFilter === 'BTP'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+            Bán thành phẩm (BTP) ({countBTP})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTypeFilter('TP')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
+              typeFilter === 'TP'
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+            Thành phẩm (TP) ({countTP})
+          </button>
+        </div>
+      )}
+
       {/* Bộ lọc & Tìm kiếm */}
       <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap gap-3 items-center justify-between">
         <div className="flex gap-3 flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Tìm theo mã hoặc tên..."
+            placeholder={
+              tab === 'items'
+                ? (typeFilter === 'NVL'
+                    ? 'Tìm nguyên vật liệu theo mã hoặc tên...'
+                    : typeFilter === 'BTP'
+                    ? 'Tìm bán thành phẩm theo mã hoặc tên...'
+                    : typeFilter === 'TP'
+                    ? 'Tìm thành phẩm theo mã hoặc tên...'
+                    : 'Tìm hàng hóa theo mã hoặc tên...')
+                : tab === 'warehouses'
+                ? 'Tìm kho theo mã hoặc tên...'
+                : 'Tìm khách hàng, NCC theo mã hoặc tên...'
+            }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full text-sm px-3 py-1.5 border border-slate-300 rounded focus:outline-none focus:border-blue-600"
+            className="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400"
           />
         </div>
-        {tab === 'items' && (
-          <div className="flex gap-2 items-center">
-            <span className="text-xs text-slate-500 font-medium">Phân loại:</span>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none"
-            >
-              <option value="">Tất cả</option>
-              <option value="NVL">Nguyên vật liệu (NVL)</option>
-              <option value="BTP">Bán thành phẩm (BTP)</option>
-              <option value="TP">Thành phẩm (TP)</option>
-            </select>
-          </div>
-        )}
         {tab === 'partners' && (
           <div className="flex gap-2 items-center">
             <span className="text-xs text-slate-500 font-medium">Loại đối tác:</span>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:outline-none"
+              className="text-xs px-2.5 py-1.5 border border-slate-200 rounded-md focus:outline-none"
             >
               <option value="">Tất cả</option>
               <option value="CUSTOMER">Khách hàng</option>
@@ -342,8 +428,9 @@ export default function CatalogView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {items.map(it => (
-                <tr key={it.id} className="hover:bg-slate-50">
+              {displayedItems.length > 0 ? (
+                displayedItems.map(it => (
+                  <tr key={it.id} className="hover:bg-slate-50">
                   <td className="p-3 font-mono text-xs font-bold text-blue-700">{it.code}</td>
                   <td className="p-3 font-medium text-slate-800">{it.name}</td>
                   <td className="p-3">
@@ -378,11 +465,18 @@ export default function CatalogView() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-slate-400 text-xs">
+                  Không có mặt hàng nào phù hợp với bộ lọc.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    )}
 
       {/* Bảng dữ liệu Kho bãi */}
       {tab === 'warehouses' && (
@@ -449,43 +543,51 @@ export default function CatalogView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {partners.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50">
-                  <td className="p-3 font-mono text-xs font-bold text-blue-700">{p.code}</td>
-                  <td className="p-3 font-medium text-slate-800">{p.name}</td>
-                  <td className="p-3">
-                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
-                      p.type === 'CUSTOMER' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${p.type === 'CUSTOMER' ? 'bg-emerald-500' : 'bg-indigo-500'}`}></span>
-                      {p.type === 'CUSTOMER' ? 'Khách hàng' : 'Nhà cung cấp'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-slate-600 font-mono text-xs">{p.phone}</td>
-                  <td className="p-3 text-slate-600">{p.address}</td>
-                  <td className={`p-3 text-right font-bold ${p.debt > 0 ? (p.type === 'CUSTOMER' ? 'text-emerald-700' : 'text-rose-700') : 'text-slate-500'}`}>
-                    {formatMoney(p.debt)}
-                  </td>
-                  <td className="p-3 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button 
-                        onClick={() => handleEditPartner(p)}
-                        className="p-1 hover:bg-blue-50 text-blue-600 rounded transition-colors"
-                        title="Sửa đối tác"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDeletePartner(p)}
-                        className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
-                        title="Xóa đối tác"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
-                    </div>
+              {displayedPartners.length > 0 ? (
+                displayedPartners.map(p => (
+                  <tr key={p.id} className="hover:bg-slate-50">
+                    <td className="p-3 font-mono text-xs font-bold text-blue-700">{p.code}</td>
+                    <td className="p-3 font-medium text-slate-800">{p.name}</td>
+                    <td className="p-3">
+                      <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                        p.type === 'CUSTOMER' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${p.type === 'CUSTOMER' ? 'bg-emerald-500' : 'bg-indigo-500'}`}></span>
+                        {p.type === 'CUSTOMER' ? 'Khách hàng' : 'Nhà cung cấp'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-600 font-mono text-xs">{p.phone}</td>
+                    <td className="p-3 text-slate-600">{p.address}</td>
+                    <td className={`p-3 text-right font-bold ${p.debt > 0 ? (p.type === 'CUSTOMER' ? 'text-emerald-700' : 'text-rose-700') : 'text-slate-500'}`}>
+                      {formatMoney(p.debt)}
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button 
+                          onClick={() => handleEditPartner(p)}
+                          className="p-1 hover:bg-blue-50 text-blue-600 rounded transition-colors"
+                          title="Sửa đối tác"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePartner(p)}
+                          className="p-1 hover:bg-red-50 text-red-500 rounded transition-colors"
+                          title="Xóa đối tác"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-400 text-xs">
+                    Không có đối tác nào phù hợp với bộ lọc.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
