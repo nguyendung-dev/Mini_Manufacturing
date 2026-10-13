@@ -83,18 +83,22 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Phím tắt Ctrl+K để mở thanh tìm kiếm & Phím Esc để đóng popups
+  // Phím tắt Ctrl+K để mở thanh tìm kiếm Menu & Phím Esc để đóng popups
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        const input = document.getElementById('global-header-search');
-        if (input) input.focus();
+        setSidebarCollapsed(false);
+        setTimeout(() => {
+          const input = document.getElementById('sidebar-menu-search');
+          if (input) input.focus();
+        }, 50);
       }
       if (e.key === 'Escape') {
         setSearchDropdownOpen(false);
         setNotificationsOpen(false);
         setUserDropdownOpen(false);
+        setSearchQuery('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -357,7 +361,7 @@ export default function App() {
       {/* SIDEBAR BÊN TRÁI: Chuẩn shadcn/ui (Nền trắng, border-zinc-200, menu active zinc-900) */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-18 min-w-[72px] max-w-[72px]' : 'w-72 min-w-[280px] max-w-[280px]'
+          sidebarCollapsed ? 'w-16 min-w-[64px] max-w-[64px]' : 'w-64 min-w-[245px] max-w-[245px]'
         } bg-white text-zinc-900 flex flex-col flex-shrink-0 transition-all duration-150 select-none border-r border-zinc-200`}
       >
         {/* Brand Header */}
@@ -379,8 +383,66 @@ export default function App() {
           </div>
         </div>
 
-        {/* Danh sách Menu Modules */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+        {/* Thanh Tìm Kiếm Chức Năng Menu (Phím tắt Ctrl + K) */}
+        {!sidebarCollapsed ? (
+          <div className="px-3 pt-3 pb-1">
+            <div className="relative flex items-center">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                id="sidebar-menu-search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm chức năng..."
+                className="w-full pl-9 pr-12 py-2 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white text-zinc-900 placeholder:text-zinc-400 text-xs rounded-lg border border-zinc-200 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-2xs"
+              />
+              <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-zinc-400 hover:text-zinc-600 p-0.5"
+                    title="Xóa tìm kiếm"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-mono text-zinc-400 bg-white border border-zinc-200 px-1.5 py-0.5 rounded shadow-2xs select-none">
+                    Ctrl K
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-2 pt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                setSidebarCollapsed(false);
+                setTimeout(() => {
+                  const input = document.getElementById('sidebar-menu-search');
+                  if (input) input.focus();
+                }, 50);
+              }}
+              className="p-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+              title="Tìm chức năng (Ctrl + K)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Danh sách Menu Modules với Cỡ Chữ Rõ Nét Hơn */}
+        <nav className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-3.5">
           {menuGroups.map(group => {
             const allowedItems = group.items.filter(item => {
               const hasPerm = permissions[item.permKey];
@@ -397,7 +459,7 @@ export default function App() {
               <div key={group.key} className="space-y-1">
                 {/* Header Phân hệ */}
                 {!sidebarCollapsed ? (
-                  <div className="px-3 py-1 text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
                     {group.title}
                   </div>
                 ) : (
@@ -413,13 +475,13 @@ export default function App() {
                         key={item.id}
                         onClick={() => setActiveModule(item.id)}
                         title={item.label}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors ${
                           isActive
-                            ? 'bg-zinc-900 text-zinc-50 shadow-sm font-medium'
-                            : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100'
+                            ? 'bg-zinc-900 text-zinc-50 shadow-sm font-semibold'
+                            : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'
                         } ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                       >
-                        <span className="flex-shrink-0">{item.icon}</span>
+                        <span className="flex-shrink-0 [&>svg]:w-4.5 [&>svg]:h-4.5">{item.icon}</span>
                         {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                       </button>
                     );
@@ -429,6 +491,8 @@ export default function App() {
             );
           })}
         </nav>
+
+
 
         {/* Chân Sidebar: Widget [ (A) admin ⌄ ]   [|] theo đúng thiết kế yêu cầu */}
         <div className="p-3 border-t border-zinc-200 bg-white">
@@ -584,100 +648,97 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* HEADER TRÊN CÙNG: Nền trắng tinh khiết, chuẩn shadcn/ui */}
         <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-6 z-10 flex-shrink-0 gap-4">
-          {/* Vị trí breadcrumb (Đã xóa nút [|] thừa trên header theo yêu cầu người dùng) */}
+          {/* Vị trí breadcrumb bên trái */}
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 flex-shrink-0">
             <span className="text-zinc-400 font-normal">Hệ thống /</span>
             <span className="text-zinc-900 font-semibold">{currentBreadcrumb}</span>
           </div>
 
-          {/* THANH TÌM KIẾM TOÀN HỆ THỐNG THEO MÃ (PO, SO, LSX, BOM, LÔ, VẬT TƯ) */}
-          <div className="relative flex-1 max-w-md mx-2" ref={searchContainerRef}>
-            <div className="relative flex items-center">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                id="global-header-search"
-                type="text"
-                value={globalSearchQuery}
-                onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                onFocus={() => { if (searchResults.length > 0) setSearchDropdownOpen(true); }}
-                placeholder="Tìm nhanh mã (PO, SO, LSX, BOM, Lô, Vật tư)..."
-                className="w-full pl-9 pr-14 py-1.5 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white text-zinc-900 placeholder:text-zinc-400 text-xs rounded-lg border border-zinc-200 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-2xs"
-              />
-              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1">
-                {globalSearchQuery ? (
-                  <button
-                    type="button"
-                    onClick={() => { setGlobalSearchQuery(''); setSearchDropdownOpen(false); }}
-                    className="text-zinc-400 hover:text-zinc-600 p-0.5 rounded"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                ) : (
-                  <span className="hidden sm:inline-flex items-center text-[10px] font-mono text-zinc-400 bg-white border border-zinc-200 px-1.5 py-0.5 rounded shadow-2xs">
-                    Ctrl K
-                  </span>
+          {/* KHU VỰC BÊN PHẢI: THANH TÌM KIẾM MÃ SÍT CẠNH NÚT THÔNG BÁO */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            {/* Thanh Tìm Kiếm Mã Toàn Hệ Thống (Không phím tắt) */}
+            <div className="relative w-64 sm:w-80" ref={searchContainerRef}>
+              <div className="relative flex items-center">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  id="global-header-search"
+                  type="text"
+                  value={globalSearchQuery}
+                  onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                  onFocus={() => { if (searchResults.length > 0) setSearchDropdownOpen(true); }}
+                  placeholder="Tìm nhanh mã (PO, SO, LSX, BOM, Lô, Vật tư)..."
+                  className="w-full pl-9 pr-8 py-1.5 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white text-zinc-900 placeholder:text-zinc-400 text-xs rounded-lg border border-zinc-200 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-2xs"
+                />
+                {globalSearchQuery && (
+                  <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => { setGlobalSearchQuery(''); setSearchDropdownOpen(false); }}
+                      className="text-zinc-400 hover:text-zinc-600 p-0.5 rounded"
+                      title="Xóa tìm kiếm"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 )}
               </div>
+
+              {/* Dropdown Kết Quả Tìm Kiếm Theo Mã */}
+              {searchDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-80 sm:w-96 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-50 max-h-96 overflow-y-auto animate-in fade-in duration-100">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-xs text-zinc-500">
+                      Đang tìm kiếm mã liên quan...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="space-y-1">
+                      <div className="px-2 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        Kết quả tìm kiếm ({searchResults.length})
+                      </div>
+                      {searchResults.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectSearchResult(item)}
+                          className="w-full text-left p-2 rounded-lg hover:bg-zinc-100 flex items-start justify-between gap-3 transition-colors group"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${item.badgeColor}`}>
+                                {item.badge}
+                              </span>
+                              <span className="font-bold text-xs text-zinc-900 group-hover:text-blue-600 font-mono">
+                                {item.title}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-zinc-500 truncate mt-0.5">
+                              {item.subtitle}
+                            </div>
+                          </div>
+                          <div className="text-[11px] text-zinc-400 flex items-center gap-1 group-hover:text-zinc-800 flex-shrink-0 pt-0.5 font-medium">
+                            <span>Xem</span>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-xs text-zinc-500">
+                      Không tìm thấy chứng từ hoặc mã nào khớp với "{globalSearchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Dropdown Kết Quả Tìm Kiếm Theo Mã */}
-            {searchDropdownOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-50 max-h-96 overflow-y-auto animate-in fade-in duration-100">
-                {isSearching ? (
-                  <div className="p-4 text-center text-xs text-zinc-500">
-                    Đang tìm kiếm mã liên quan...
-                  </div>
-                ) : searchResults.length > 0 ? (
-                  <div className="space-y-1">
-                    <div className="px-2 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      Kết quả tìm kiếm ({searchResults.length})
-                    </div>
-                    {searchResults.map((item, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectSearchResult(item)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-zinc-100 flex items-start justify-between gap-3 transition-colors group"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${item.badgeColor}`}>
-                              {item.badge}
-                            </span>
-                            <span className="font-bold text-xs text-zinc-900 group-hover:text-blue-600 font-mono">
-                              {item.title}
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-zinc-500 truncate mt-0.5">
-                            {item.subtitle}
-                          </div>
-                        </div>
-                        <div className="text-[11px] text-zinc-400 flex items-center gap-1 group-hover:text-zinc-800 flex-shrink-0 pt-0.5 font-medium">
-                          <span>Xem chi tiết</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-xs text-zinc-500">
-                    Không tìm thấy chứng từ hoặc mã nào khớp với "{globalSearchQuery}"
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* KHU VỰC THÔNG BÁO VÀ TRẠNG THÁI XƯỞNG */}
-          <div className="flex items-center gap-3 flex-shrink-0">
             {/* Nút Chuông Thông Báo */}
             <div className="relative" ref={notifContainerRef}>
               <button
