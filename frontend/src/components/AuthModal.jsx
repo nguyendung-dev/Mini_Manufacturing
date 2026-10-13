@@ -88,7 +88,7 @@ export default function AuthModal({ onLoginSuccess }) {
             Mini Manufacturing ERP V1.0
           </div>
           <h2 className="text-xl font-bold tracking-tight">Hệ thống Quản lý Sản xuất & Kho</h2>
-          <p className="text-xs text-slate-400 mt-1">Xưởng Cơ Khí Chế Tạo VinaTech</p>
+          <p className="text-xs text-slate-400 mt-1">Xưởng Cơ Khí Chế Tạo HT softtech</p>
         </div>
 
         {/* Tab switch Đăng nhập / Đăng ký */}

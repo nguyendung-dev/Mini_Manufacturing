@@ -1,7 +1,7 @@
 import '../src/index.css';
 
 export const metadata = {
-  title: 'VinaTech ERP - Quản Trị Sản Xuất & Kho Xưởng',
+  title: 'HT softtech ERP - Quản Trị Sản Xuất & Kho Xưởng',
   description: 'Hệ thống điều hành sản xuất và kho vật tư cơ khí chế tạo',
 };
 

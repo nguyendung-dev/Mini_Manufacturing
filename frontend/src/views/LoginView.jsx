@@ -88,14 +88,14 @@ export default function LoginView({ onLoginSuccess }) {
         {/* Header với Icon tối giản */}
         <div className="text-center mb-6">
           <div className="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs mx-auto mb-3 shadow-sm">
-            VN
+            HT
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
-            {!isRegister ? 'Đăng nhập VinaTech' : 'Tạo tài khoản mới'}
+            {!isRegister ? 'Đăng nhập HT softtech' : 'Tạo tài khoản mới'}
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
             {!isRegister
-              ? 'Hệ thống Quản trị Sản xuất & Kho VinaTech ERP'
+              ? 'Hệ thống Quản trị Sản xuất & Kho HT softtech ERP'
               : 'Đăng ký tài khoản phân quyền làm việc nội bộ'}
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function LoginView({ onLoginSuccess }) {
                 onChange={(e) => setBranch(e.target.value)}
                 className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 cursor-pointer"
               >
-                <option value="factory_hn">Nhà máy Cơ khí VinaTech (Hà Nội)</option>
+                <option value="factory_hn">Nhà máy Cơ khí HT softtech (Hà Nội)</option>
                 <option value="warehouse_central">Kho Tổng Vật tư & Bán thành phẩm</option>
               </select>
             </div>
@@ -302,7 +302,7 @@ export default function LoginView({ onLoginSuccess }) {
       </div>
 
       <div className="mt-6 text-center text-xs text-zinc-400">
-        VinaTech Manufacturing ERP • Phiên bản 1.2
+        HT softtech Manufacturing ERP • Phiên bản 1.2
       </div>
     </div>
   );

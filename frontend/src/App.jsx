@@ -198,7 +198,7 @@ export default function App() {
   if (initialLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-300 text-sm">
-        Đang khởi động phần mềm VinaTech ERP...
+        Đang khởi động phần mềm HT softtech ERP...
       </div>
     );
   }
@@ -230,12 +230,12 @@ export default function App() {
         <div className="h-14 flex items-center px-4 border-b border-zinc-200 bg-white">
           <div className="flex items-center gap-3 overflow-hidden w-full">
             <div className="w-7 h-7 rounded-md bg-zinc-900 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">
-              VN
+              HT
             </div>
             {!sidebarCollapsed && (
               <div className="leading-tight truncate flex-1">
                 <div className="font-semibold text-sm text-zinc-950 tracking-tight truncate">
-                  VinaTech ERP
+                  HT softtech ERP
                 </div>
                 <div className="text-[11px] text-zinc-500 font-normal truncate">
                   Quản Trị Sản Xuất
