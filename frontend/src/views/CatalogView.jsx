@@ -10,6 +10,8 @@ export default function CatalogView() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
 
@@ -191,6 +193,33 @@ export default function CatalogView() {
     }
   };
 
+  const handleResetData = async (mode) => {
+    let confirmMsg = '';
+    if (mode === 'seed_wood') {
+      confirmMsg = 'Hệ thống sẽ làm sạch dữ liệu cũ và NẠP DỮ LIỆU MẪU XƯỞNG GỖ NỘI THẤT (Gỗ sồi, MDF An Cường, Bản lề Hafele, Tủ bếp, Bàn ăn, BOM, LSX...). Bạn có chắc chắn muốn thực hiện?';
+    } else if (mode === 'clean_all') {
+      confirmMsg = 'CẢNH BÁO: Thao tác này sẽ XÓA TRẮNG 100% dữ liệu (hàng hóa, tồn kho, đơn hàng, LSX, khách hàng...). Toàn bộ sẽ về trạng thái trắng tinh để bạn tự tạo mới. Bạn có chắc chắn không?';
+    } else if (mode === 'clear_transactions') {
+      confirmMsg = 'Hệ thống sẽ xóa sạch toàn bộ đơn hàng, lệnh sản xuất, giao dịch xuất nhập kho và số dư tồn kho, nhưng GIỮ LẠI danh mục hàng hóa & định mức BOM. Bạn có chắc chắn không?';
+    }
+    if (!window.confirm(confirmMsg)) return;
+
+    setResetLoading(true);
+    try {
+      const res = await fetchApi('/catalog/reset-data', {
+        method: 'POST',
+        body: JSON.stringify({ mode })
+      });
+      alert(res.message || 'Thao tác dữ liệu thành công!');
+      setShowResetModal(false);
+      loadData();
+    } catch (err) {
+      alert('Lỗi: ' + (err.message || err));
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Tabs */}
@@ -199,18 +228,31 @@ export default function CatalogView() {
           <h2 className="text-xl font-bold text-slate-800">Danh mục Vật tư, Kho bãi & Đối tác</h2>
           <p className="text-sm text-slate-500 mt-1">Quản lý hàng hóa, kho bãi và danh sách khách hàng, nhà cung cấp</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setItemForm({ code: '', name: '', type: 'NVL', category_id: '', unit: 'Cái', cost_price: 0, sale_price: 0, min_stock: 0 });
-            setPartnerForm({ code: '', name: '', type: 'CUSTOMER', phone: '', address: '', debt: 0 });
-            setWhForm({ code: '', name: '', type: 'NVL', location: '' });
-            setShowModal(true);
-          }}
-          className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
-        >
-          + Thêm mới {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowResetModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded font-medium hover:bg-rose-100 transition-colors shadow-sm text-sm"
+            title="Làm sạch dữ liệu hoặc nạp dữ liệu mẫu xưởng gỗ"
+          >
+            <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Dọn dẹp / Reset dữ liệu</span>
+          </button>
+          <button
+            onClick={() => {
+              setEditingId(null);
+              setItemForm({ code: '', name: '', type: 'NVL', category_id: '', unit: 'Cái', cost_price: 0, sale_price: 0, min_stock: 0 });
+              setPartnerForm({ code: '', name: '', type: 'CUSTOMER', phone: '', address: '', debt: 0 });
+              setWhForm({ code: '', name: '', type: 'NVL', location: '' });
+              setShowModal(true);
+            }}
+            className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
+          >
+            + Thêm mới {tab === 'items' ? 'mặt hàng' : tab === 'warehouses' ? 'kho bãi' : 'đối tác'}
+          </button>
+        </div>
       </div>
 
       {/* Tabs navigation */}
@@ -682,6 +724,124 @@ export default function CatalogView() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RESET / DỌN DẸP DỮ LIỆU */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden">
+            {/* Header modal */}
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-lg bg-rose-100 text-rose-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </span>
+                <div>
+                  <h3 className="font-bold text-slate-800 text-base">Dọn dẹp & Quản lý Dữ liệu Hệ thống</h3>
+                  <p className="text-xs text-slate-500">Chọn chế độ làm sạch hoặc nạp dữ liệu mẫu phù hợp với nhu cầu test</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={resetLoading}
+                onClick={() => setShowResetModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 text-xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Nội dung 3 lựa chọn */}
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {resetLoading && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-center gap-3">
+                  <svg className="animate-spin h-5 w-5 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Hệ thống đang tiến hành xử lý dữ liệu, vui lòng đợi trong giây lát...</span>
+                </div>
+              )}
+
+              {/* Lựa chọn 1: Nạp mẫu Xưởng Gỗ */}
+              <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-emerald-800">🪵 Nạp dữ liệu mẫu Xưởng Gỗ Nội Thất</span>
+                      <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded-full">Khuyên dùng</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Xóa bỏ dữ liệu cơ khí cũ, nạp mẫu chuẩn xưởng mộc: Gỗ sồi Mỹ, Ván MDF chống ẩm An Cường, Bản lề giảm chấn Hafele, Sơn PU bóng, Tủ bếp 3 tầng, Bàn ăn 6 ghế kèm đầy đủ <b>Định mức BOM</b> và <b>Lệnh sản xuất</b> mẫu.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={() => handleResetData('seed_wood')}
+                    className="shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    Nạp mẫu Gỗ
+                  </button>
+                </div>
+              </div>
+
+              {/* Lựa chọn 2: Chỉ xóa giao dịch */}
+              <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40 hover:bg-blue-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-base font-bold text-blue-800">📋 Chỉ xóa dữ liệu Giao dịch & Đơn hàng</span>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Giữ nguyên toàn bộ danh mục Hàng hóa, Kho bãi và Định mức BOM đang có. Chỉ xóa sạch: Đơn mua, Đơn bán, Lệnh sản xuất, Phiếu thu chi và đưa tồn kho về 0 để nhập liệu quy trình mới.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={() => handleResetData('clear_transactions')}
+                    className="shrink-0 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    Xóa giao dịch
+                  </button>
+                </div>
+              </div>
+
+              {/* Lựa chọn 3: Xóa trắng toàn bộ */}
+              <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40 hover:bg-rose-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-base font-bold text-rose-800">⚠️ Xóa trắng toàn bộ (Trống 100%)</span>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Xóa sạch 100% toàn bộ cơ sở dữ liệu (tất cả hàng hóa cơ khí cũ, khách hàng, nhà cung cấp, định mức, tồn kho...). Toàn bộ hệ thống sẽ trống tinh để bạn tự tạo danh mục từ đầu.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={() => handleResetData('clean_all')}
+                    className="shrink-0 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    Xóa sạch 100%
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                type="button"
+                disabled={resetLoading}
+                onClick={() => setShowResetModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Đóng lại
+              </button>
+            </div>
           </div>
         </div>
       )}
