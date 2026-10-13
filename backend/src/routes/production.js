@@ -192,7 +192,14 @@ router.post('/orders/:id/allocate', async (req, res) => {
     await conn.beginTransaction();
 
     const orderId = req.params.id;
-    const { sourceWarehouseId = 'WH-NVL', destWarehouseId = 'WH-SX', allocations = [] } = req.body;
+    let { sourceWarehouseId = 'WH-NVL', destWarehouseId = 'WH-SX', allocations = [] } = req.body;
+
+    // Tự động phân giải ID kho nếu truyền ID tạm, Mã kho hoặc Loại kho
+    const [srcWhRows] = await conn.query('SELECT id FROM warehouses WHERE id = ? OR code = ? OR type = "NVL" LIMIT 1', [sourceWarehouseId, sourceWarehouseId]);
+    if (srcWhRows.length > 0) sourceWarehouseId = srcWhRows[0].id;
+
+    const [destWhRows] = await conn.query('SELECT id FROM warehouses WHERE id = ? OR code = ? OR type = "SX" LIMIT 1', [destWarehouseId, destWarehouseId]);
+    if (destWhRows.length > 0) destWarehouseId = destWhRows[0].id;
 
     const [orderRows] = await conn.query('SELECT * FROM production_orders WHERE id = ?', [orderId]);
     if (orderRows.length === 0) {
@@ -295,8 +302,18 @@ router.post('/orders/:id/finish', async (req, res) => {
     const order = orderRows[0];
     const qtyProduced = Number(actualQty || order.planned_qty);
 
-    // Xác định kho nhận: Nếu BTP -> WH-BTP, Nếu TP -> WH-TP
-    const targetWhId = destWarehouseId || (order.item_type === 'BTP' ? 'WH-BTP' : 'WH-TP');
+    // Xác định kho nhận: Nếu BTP -> BTP, Nếu TP -> TP
+    let targetWhId = destWarehouseId;
+    if (!targetWhId) {
+      const neededType = order.item_type === 'BTP' ? 'BTP' : 'TP';
+      const [whTargetRows] = await conn.query('SELECT id FROM warehouses WHERE type = ? LIMIT 1', [neededType]);
+      targetWhId = whTargetRows.length > 0 ? whTargetRows[0].id : (order.item_type === 'BTP' ? 'WH-BTP' : 'WH-TP');
+    }
+
+    // Kho nguồn SX
+    let sxWhId = 'WH-SX';
+    const [sxWhRows] = await conn.query('SELECT id FROM warehouses WHERE type = "SX" LIMIT 1');
+    if (sxWhRows.length > 0) sxWhId = sxWhRows[0].id;
 
     // Tạo phiếu nhập kho từ sản xuất
     const txId = `ST-${Date.now()}`;
@@ -304,8 +321,8 @@ router.post('/orders/:id/finish', async (req, res) => {
 
     await conn.query(`
       INSERT INTO stock_transactions (id, code, date, type, status, source_warehouse_id, dest_warehouse_id, ref_code, note)
-      VALUES (?, ?, CURDATE(), 'IN_PRODUCTION', 'POSTED', 'WH-SX', ?, ?, ?)
-    `, [txId, txCode, targetWhId, order.code, `Nhập kho từ ${order.code}. ${note}`]);
+      VALUES (?, ?, CURDATE(), 'IN_PRODUCTION', 'POSTED', ?, ?, ?, ?)
+    `, [txId, txCode, sxWhId, targetWhId, order.code, `Nhập kho từ ${order.code}. ${note}`]);
 
     await conn.query(`
       INSERT INTO stock_transaction_items (id, transaction_id, item_id, lot_number, qty, price)

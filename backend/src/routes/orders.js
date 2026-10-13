@@ -263,13 +263,18 @@ router.post('/sales/:id/deliver', async (req, res) => {
     }
     const order = orders[0];
 
+    // Tự động phân giải ID kho Thành Phẩm
+    let finalSourceWh = sourceWarehouseId;
+    const [tpWhRows] = await conn.query('SELECT id FROM warehouses WHERE id = ? OR code = ? OR type = "TP" LIMIT 1', [sourceWarehouseId, sourceWarehouseId]);
+    if (tpWhRows.length > 0) finalSourceWh = tpWhRows[0].id;
+
     const txId = `ST-${Date.now()}`;
     const txCode = `PXK-BAN-${Date.now().toString().slice(-6)}`;
 
     await conn.query(`
       INSERT INTO stock_transactions (id, code, date, type, status, source_warehouse_id, dest_warehouse_id, partner_id, ref_code, note)
       VALUES (?, ?, CURDATE(), 'OUT_SALE', 'POSTED', ?, NULL, ?, ?, ?)
-    `, [txId, txCode, sourceWarehouseId, order.partner_id, order.code, `Xuất giao hàng theo đơn bán ${order.code}`]);
+    `, [txId, txCode, finalSourceWh, order.partner_id, order.code, `Xuất giao hàng theo đơn bán ${order.code}`]);
 
     for (const it of items) {
       const qty = Number(it.qty || 0);
@@ -279,7 +284,7 @@ router.post('/sales/:id/deliver', async (req, res) => {
       const [stkRows] = await conn.query(`
         SELECT quantity FROM stock 
         WHERE warehouse_id = ? AND item_id = ? AND lot_number = ?
-      `, [sourceWarehouseId, it.itemId, lot]);
+      `, [finalSourceWh, it.itemId, lot]);
 
       const curQty = stkRows.length > 0 ? Number(stkRows[0].quantity) : 0;
       if (curQty < qty) {
@@ -292,7 +297,7 @@ router.post('/sales/:id/deliver', async (req, res) => {
         UPDATE stock 
         SET quantity = quantity - ? 
         WHERE warehouse_id = ? AND item_id = ? AND lot_number = ?
-      `, [qty, sourceWarehouseId, it.itemId, lot]);
+      `, [qty, finalSourceWh, it.itemId, lot]);
 
       // Lưu transaction line
       await conn.query(`
