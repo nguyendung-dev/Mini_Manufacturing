@@ -22,7 +22,7 @@ router.post('/calculate', async (req, res) => {
   try {
     const { production_order_id, labor_cost = 0, overhead_cost = 0 } = req.body;
 
-    const [orderRows] = await query(`
+    const orderRows = await query(`
       SELECT po.*, i.code as target_item_code, i.name as target_item_name, i.cost_price as standard_price
       FROM production_orders po
       JOIN items i ON po.target_item_id = i.id
@@ -71,9 +71,49 @@ router.post('/calculate', async (req, res) => {
       totalCost,
       unitCost,
       standardBomCost,
-      variance,
       message: 'Tính toán và lưu giá thành thành công'
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Lấy chi tiết 1 bảng tính giá thành kèm danh sách NVL đã dùng
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rows = await query(`
+      SELECT c.*, po.code as production_order_code, po.date as order_date, po.lot_number, b.code as bom_code
+      FROM cost_calculations c
+      JOIN production_orders po ON c.production_order_id = po.id
+      LEFT JOIN boms b ON po.bom_id = b.id
+      WHERE c.id = ?
+    `, [id]);
+
+    if (rows.length === 0) return res.status(404).json({ error: 'Không tìm thấy bản ghi quyết toán' });
+    const costing = rows[0];
+
+    // Lấy chi tiết các NVL thực tế đã cấp phát / dùng
+    const materials = await query(`
+      SELECT pa.*, i.name as item_name, i.code as item_code, i.unit as item_unit, i.cost_price
+      FROM production_allocations pa
+      JOIN items i ON pa.item_id = i.id
+      WHERE pa.production_order_id = ?
+    `, [costing.production_order_id]);
+
+    costing.materials = materials;
+    res.json(costing);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Xóa bản ghi quyết toán giá thành (cho phép tính lại nếu nhập sai)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await query('DELETE FROM cost_calculations WHERE id = ?', [id]);
+    res.json({ message: 'Đã xóa bản ghi quyết toán giá thành thành công' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
