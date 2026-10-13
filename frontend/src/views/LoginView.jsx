@@ -85,10 +85,10 @@ export default function LoginView({ onLoginSuccess }) {
       {/* Khối Card phong cách shadcn/ui (Authentication-01) */}
       <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-sm">
         
-        {/* Header với Icon tối giản */}
+        {/* Header với Logo chính thức */}
         <div className="text-center mb-6">
-          <div className="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-xs mx-auto mb-3 shadow-sm">
-            HT
+          <div className="h-12 flex items-center justify-center mx-auto mb-3">
+            <img src="/logo.png" alt="HT softtech" className="h-10 object-contain" />
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
             {!isRegister ? 'Đăng nhập HT softtech' : 'Tạo tài khoản mới'}

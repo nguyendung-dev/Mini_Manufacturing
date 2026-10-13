@@ -112,7 +112,7 @@ export default function BomView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 03: Định mức vật tư (BOM) & Tính nhu cầu</h2>
+          <h2 className="text-xl font-bold text-slate-800">Định mức kỹ thuật (BOM) & Nhu cầu vật tư</h2>
           <p className="text-sm text-slate-500 mt-1">
             Thiết lập BOM đa cấp cho Thành phẩm/Bán thành phẩm, hỗ trợ tỷ lệ hao hụt và tính nhu cầu NVL
           </p>
@@ -257,41 +257,44 @@ export default function BomView() {
                 </div>
 
                 {mrpResult && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                  <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table className="w-full text-sm text-left min-w-[750px] whitespace-nowrap">
                       <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
                         <tr>
-                          <th className="p-2.5">Vật tư cần dùng</th>
-                          <th className="p-2.5 text-right">Định mức/SP</th>
-                          <th className="p-2.5 text-right">Tổng nhu cầu (+Hao hụt)</th>
-                          <th className="p-2.5 text-right">Tồn kho hiện có</th>
-                          <th className="p-2.5 text-right">Cần mua thêm (Thiếu)</th>
-                          <th className="p-2.5 text-center">Trạng thái</th>
+                          <th className="p-3">Vật tư cần dùng</th>
+                          <th className="p-3 text-right">Định mức/SP</th>
+                          <th className="p-3 text-right">Tổng nhu cầu (+Hao hụt)</th>
+                          <th className="p-3 text-right">Tồn kho hiện có</th>
+                          <th className="p-3 text-right">Cần mua thêm (Thiếu)</th>
+                          <th className="p-3 text-center">Trạng thái</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {mrpResult.requirements?.map((req, idx) => (
                           <tr key={idx} className="hover:bg-slate-50">
-                            <td className="p-2.5">
-                              <div className="font-medium text-slate-800">{req.itemName}</div>
-                              <div className="text-xs text-slate-500 font-mono">{req.itemCode}</div>
+                            <td className="p-3">
+                              <div className="font-semibold text-slate-800">{req.itemName}</div>
+                              <div className="text-xs text-slate-400 font-mono">{req.itemCode}</div>
                             </td>
-                            <td className="p-2.5 text-right text-slate-600">
+                            <td className="p-3 text-right text-slate-600">
                               {formatNumber(req.standardQty)} {req.unit}
                             </td>
-                            <td className="p-2.5 text-right font-bold text-slate-800">
+                            <td className="p-3 text-right font-bold text-slate-800">
                               {formatNumber(req.totalRequired)} {req.unit}
                             </td>
-                            <td className="p-2.5 text-right font-semibold text-blue-700">
+                            <td className="p-3 text-right font-semibold text-blue-700">
                               {formatNumber(req.currentStock)} {req.unit}
                             </td>
-                            <td className={`p-2.5 text-right font-bold ${req.shortage > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                            <td className={`p-3 text-right font-bold ${req.shortage > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
                               {req.shortage > 0 ? `${formatNumber(req.shortage)} ${req.unit}` : '0'}
                             </td>
-                            <td className="p-2.5 text-center">
-                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                                req.status === 'ĐỦ_HÀNG' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                            <td className="p-3 text-center">
+                              <span className={`px-3 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1.5 shadow-xs ${
+                                req.status === 'ĐỦ_HÀNG' 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
                               }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${req.status === 'ĐỦ_HÀNG' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                                 {req.status === 'ĐỦ_HÀNG' ? 'Đủ vật tư' : 'Thiếu hàng'}
                               </span>
                             </td>

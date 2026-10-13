@@ -101,7 +101,7 @@ export default function CostingView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 07: Chi phí & Giá thành sản xuất</h2>
+          <h2 className="text-xl font-bold text-slate-800">Chi phí & Giá thành sản xuất thực tế</h2>
           <p className="text-sm text-slate-500 mt-1">
             Tập hợp chi phí NVL thực dùng, chi phí nhân công, chi phí chung và kết chuyển giá thành theo lệnh
           </p>
@@ -134,7 +134,7 @@ export default function CostingView() {
 
       {/* Bảng kết quả giá thành */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className="w-full text-sm text-left min-w-[1000px] whitespace-nowrap">
           <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
             <tr>
               <th className="p-3">Mã quyết toán</th>
@@ -170,8 +170,13 @@ export default function CostingView() {
                 <td className="p-3 text-right text-slate-700">{formatMoney(c.overhead_cost)}</td>
                 <td className="p-3 text-right font-bold text-slate-900">{formatMoney(c.total_cost)}</td>
                 <td className="p-3 text-right font-bold text-blue-700 bg-blue-50/50">{formatMoney(c.unit_cost)}</td>
-                <td className={`p-3 text-right font-semibold ${c.variance <= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                  {c.variance <= 0 ? `Tiết kiệm ${formatMoney(Math.abs(c.variance))}` : `Vượt định mức +${formatMoney(c.variance)}`}
+                <td className="p-3 text-right">
+                  <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                    c.variance <= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.variance <= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+                    {c.variance <= 0 ? `Tiết kiệm ${formatMoney(Math.abs(c.variance))}` : `Vượt định mức +${formatMoney(c.variance)}`}
+                  </span>
                 </td>
                 <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-1.5">

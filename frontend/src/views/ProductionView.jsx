@@ -182,7 +182,7 @@ export default function ProductionView({ onOpenTraceModal }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 04: Quản lý sản xuất & Lệnh SX (LSX)</h2>
+          <h2 className="text-xl font-bold text-slate-800">Lệnh sản xuất & Điều độ phân xưởng</h2>
           <p className="text-sm text-slate-500 mt-1">
             Theo dõi kế hoạch, cấp phát vật tư theo đợt, công đoạn gia công và nhập kho BTP/TP theo lô
           </p>

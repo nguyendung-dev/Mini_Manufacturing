@@ -196,7 +196,7 @@ export default function CatalogView() {
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 01: Danh mục & Hệ thống</h2>
+          <h2 className="text-xl font-bold text-slate-800">Danh mục Vật tư, Kho bãi & Đối tác</h2>
           <p className="text-sm text-slate-500 mt-1">Quản lý hàng hóa, kho bãi và danh sách khách hàng, nhà cung cấp</p>
         </div>
         <button
@@ -286,7 +286,7 @@ export default function CatalogView() {
       {/* Bảng dữ liệu Hàng hóa */}
       {tab === 'items' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[950px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="p-3">Mã hàng</th>
@@ -305,11 +305,12 @@ export default function CatalogView() {
                   <td className="p-3 font-mono text-xs font-bold text-blue-700">{it.code}</td>
                   <td className="p-3 font-medium text-slate-800">{it.name}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                      it.type === 'NVL' ? 'bg-amber-100 text-amber-800' :
-                      it.type === 'BTP' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                      it.type === 'NVL' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                      it.type === 'BTP' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
                     }`}>
-                      {it.type}
+                      <span className={`w-1.5 h-1.5 rounded-full ${it.type === 'NVL' ? 'bg-amber-500' : it.type === 'BTP' ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
+                      {it.type === 'NVL' ? 'Nguyên vật liệu' : it.type === 'BTP' ? 'Bán thành phẩm' : 'Thành phẩm'}
                     </span>
                   </td>
                   <td className="p-3 text-slate-600">{it.unit}</td>
@@ -341,10 +342,10 @@ export default function CatalogView() {
         </div>
       )}
 
-      {/* Bảng dữ liệu Kho */}
+      {/* Bảng dữ liệu Kho bãi */}
       {tab === 'warehouses' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[850px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="p-3">Mã kho</th>
@@ -360,8 +361,8 @@ export default function CatalogView() {
                   <td className="p-3 font-mono text-xs font-bold text-blue-700">{w.code}</td>
                   <td className="p-3 font-medium text-slate-800">{w.name}</td>
                   <td className="p-3">
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded bg-slate-100 text-slate-700">
-                      {w.type}
+                    <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {w.type === 'NVL' ? 'Kho Nguyên vật liệu' : w.type === 'TP' ? 'Kho Thành phẩm' : w.type === 'BTP' ? 'Kho Bán thành phẩm' : w.type === 'SX' ? 'Kho Sản xuất' : w.type}
                     </span>
                   </td>
                   <td className="p-3 text-slate-600">{w.location || '-'}</td>
@@ -393,7 +394,7 @@ export default function CatalogView() {
       {/* Bảng dữ liệu Đối tác */}
       {tab === 'partners' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[950px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="p-3">Mã đối tác</th>
@@ -411,9 +412,10 @@ export default function CatalogView() {
                   <td className="p-3 font-mono text-xs font-bold text-blue-700">{p.code}</td>
                   <td className="p-3 font-medium text-slate-800">{p.name}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                      p.type === 'CUSTOMER' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
+                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                      p.type === 'CUSTOMER' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                     }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.type === 'CUSTOMER' ? 'bg-emerald-500' : 'bg-indigo-500'}`}></span>
                       {p.type === 'CUSTOMER' ? 'Khách hàng' : 'Nhà cung cấp'}
                     </span>
                   </td>

@@ -165,7 +165,7 @@ export default function OrdersView() {
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 05: Mua hàng & Bán hàng</h2>
+          <h2 className="text-xl font-bold text-slate-800">Đơn mua hàng (PO) & Đơn bán hàng (SO)</h2>
           <p className="text-sm text-slate-500 mt-1">
             Quản lý đơn mua NVL từ NCC, đơn bán TP cho khách hàng và liên kết phiếu nhập/xuất kho
           </p>
@@ -220,7 +220,7 @@ export default function OrdersView() {
       {/* Bảng Đơn Mua Hàng */}
       {tab === 'purchase' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[950px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
               <tr>
                 <th className="p-3">Số đơn mua (PO)</th>
@@ -253,9 +253,10 @@ export default function OrdersView() {
                   <td className="p-3 text-right font-bold text-slate-800">{formatMoney(po.total_amount)}</td>
                   <td className="p-3 text-right text-emerald-700 font-medium">{formatMoney(po.paid_amount)}</td>
                   <td className="p-3 text-center">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                      po.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                      po.status === 'RECEIVED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${po.status === 'RECEIVED' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                       {po.status === 'RECEIVED' ? 'Đã nhận hàng' : 'Chờ giao'}
                     </span>
                   </td>
@@ -290,7 +291,7 @@ export default function OrdersView() {
       {/* Bảng Đơn Bán Hàng */}
       {tab === 'sales' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[950px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
               <tr>
                 <th className="p-3">Số đơn bán (SO)</th>
@@ -322,9 +323,10 @@ export default function OrdersView() {
                   <td className="p-3 text-right font-bold text-slate-800">{formatMoney(so.total_amount)}</td>
                   <td className="p-3 text-right text-emerald-700 font-medium">{formatMoney(so.paid_amount)}</td>
                   <td className="p-3 text-center">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                      so.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                    <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1.5 ${
+                      so.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${so.status === 'DELIVERED' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                       {so.status === 'DELIVERED' ? 'Đã giao hàng' : 'Đang xử lý'}
                     </span>
                   </td>

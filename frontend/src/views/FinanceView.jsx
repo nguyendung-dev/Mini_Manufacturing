@@ -122,7 +122,7 @@ export default function FinanceView() {
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Module 06: Thu chi nội bộ & Sổ quỹ & Công nợ</h2>
+          <h2 className="text-xl font-bold text-slate-800">Thu chi nội bộ & Sổ quỹ tiền mặt</h2>
           <p className="text-sm text-slate-500 mt-1">
             Quản lý phiếu thu, phiếu chi tiền mặt / ngân hàng và theo dõi công nợ đối tác nhiều đợt
           </p>
@@ -254,7 +254,7 @@ export default function FinanceView() {
       {/* Tab Phiếu thu */}
       {tab === 'receipts' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[900px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
               <tr>
                 <th className="p-3">Số phiếu thu</th>
@@ -273,7 +273,7 @@ export default function FinanceView() {
                   <td className="p-3 text-xs text-slate-600">{new Date(r.date).toLocaleDateString('vi-VN')}</td>
                   <td className="p-3 font-medium text-slate-800">{r.partner_name || 'Khách vãng lai'}</td>
                   <td className="p-3 text-xs">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-700 border border-slate-200">
                       {r.payment_method === 'BANK' ? 'Chuyển khoản' : 'Tiền mặt'}
                     </span>
                   </td>
@@ -290,7 +290,7 @@ export default function FinanceView() {
       {/* Tab Phiếu chi */}
       {tab === 'payments' && (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left min-w-[950px] whitespace-nowrap">
             <thead className="text-xs uppercase bg-slate-100 text-slate-600 font-semibold border-b">
               <tr>
                 <th className="p-3">Số phiếu chi</th>
@@ -313,7 +313,7 @@ export default function FinanceView() {
                     {p.type === 'PURCHASE' ? 'Mua hàng NVL' : p.type === 'OVERHEAD' ? 'Chi phí chung' : 'Lương / Khác'}
                   </td>
                   <td className="p-3 text-xs">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-700 border border-slate-200">
                       {p.payment_method === 'BANK' ? 'Chuyển khoản' : 'Tiền mặt'}
                     </span>
                   </td>
