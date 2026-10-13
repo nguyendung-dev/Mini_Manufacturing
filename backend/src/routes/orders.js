@@ -278,46 +278,39 @@ router.post('/sales/:id/deliver', async (req, res) => {
 
     for (const it of items) {
       const qty = Number(it.qty || 0);
-      let lot = it.lotNumber;
 
-      // 1. Kiểm tra xem lô chỉ định có tồn không
+      // Tìm lô và kho có sẵn hàng của sản phẩm này (ưu tiên kho TP chỉ định)
       let [stkRows] = await conn.query(`
-        SELECT lot_number, quantity FROM stock 
-        WHERE warehouse_id = ? AND item_id = ? AND lot_number = ?
-      `, [finalSourceWh, it.itemId, lot]);
+        SELECT warehouse_id, lot_number, quantity FROM stock 
+        WHERE item_id = ? AND quantity >= ?
+        ORDER BY (warehouse_id = ?) DESC, quantity DESC LIMIT 1
+      `, [it.itemId, qty, finalSourceWh]);
 
-      // 2. Nếu lô chỉ định không có hoặc không đủ, tự động tìm lô có sẵn tồn kho của sản phẩm này trong kho TP
-      if (stkRows.length === 0 || Number(stkRows[0].quantity) < qty) {
-        const [anyLot] = await conn.query(`
-          SELECT lot_number, quantity FROM stock 
-          WHERE warehouse_id = ? AND item_id = ? AND quantity >= ?
-          ORDER BY quantity DESC LIMIT 1
-        `, [finalSourceWh, it.itemId, qty]);
-
-        if (anyLot.length > 0) {
-          lot = anyLot[0].lot_number;
-          stkRows = anyLot;
-        }
-      }
-
-      const curQty = stkRows.length > 0 ? Number(stkRows[0].quantity) : 0;
-      if (curQty < qty) {
+      if (stkRows.length === 0) {
+        // Thử tính tổng số lượng tồn của sản phẩm này ở tất cả các kho
+        const [sumRows] = await conn.query(`
+          SELECT COALESCE(SUM(quantity), 0) as total_qty FROM stock WHERE item_id = ?
+        `, [it.itemId]);
+        const curQty = Number(sumRows[0]?.total_qty || 0);
         await conn.rollback();
-        return res.status(400).json({ error: `Tồn kho không đủ để xuất (Hiện có: ${curQty}, cần xuất: ${qty}). Vui lòng hoàn thành Lệnh sản xuất để nhập bàn vào kho trước!` });
+        return res.status(400).json({ error: `Tồn kho không đủ để xuất (Hiện có: ${curQty}, cần xuất: ${qty}). Vui lòng kiểm tra lại tồn kho thành phẩm!` });
       }
+
+      const whIdToDeduct = stkRows[0].warehouse_id;
+      const lotToDeduct = stkRows[0].lot_number;
 
       // Giảm kho
       await conn.query(`
         UPDATE stock 
         SET quantity = quantity - ? 
         WHERE warehouse_id = ? AND item_id = ? AND lot_number = ?
-      `, [qty, finalSourceWh, it.itemId, lot]);
+      `, [qty, whIdToDeduct, it.itemId, lotToDeduct]);
 
       // Lưu transaction line
       await conn.query(`
         INSERT INTO stock_transaction_items (id, transaction_id, item_id, lot_number, qty, price)
         VALUES (?, ?, ?, ?, ?, ?)
-      `, [`STI-${Date.now()}-${Math.random().toString().slice(-4)}`, txId, it.itemId, lot, qty, it.unitPrice || 0]);
+      `, [`STI-${Date.now()}-${Math.random().toString().slice(-4)}`, txId, it.itemId, lotToDeduct, qty, it.unitPrice || 0]);
 
       // Cập nhật delivered_qty
       await conn.query(`

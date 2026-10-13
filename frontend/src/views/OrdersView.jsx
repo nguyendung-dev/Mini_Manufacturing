@@ -103,14 +103,12 @@ export default function OrdersView({ initialTab = 'purchase' }) {
       const deliveryItems = (so.items || []).map(it => ({
         itemId: it.item_id,
         qty: it.qty,
-        unitPrice: it.unit_price,
-        lotNumber: 'LOT-TP-202610-01'
+        unitPrice: it.unit_price
       }));
 
       const res = await fetchApi(`/orders/sales/${so.id}/deliver`, {
         method: 'POST',
         body: JSON.stringify({
-          sourceWarehouseId: 'WH-TP',
           items: deliveryItems
         })
       });
