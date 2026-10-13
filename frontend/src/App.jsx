@@ -837,7 +837,7 @@ export default function App() {
 
         {/* KHÔNG GIAN NỘI DUNG CHÍNH (NỀN SÁNG, DỄ ĐỌC SỐ LIỆU) */}
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-50/70">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             {activeModule === 'dashboard' && <DashboardView onNavigate={(mod) => setActiveModule(mod)} />}
             {activeModule === 'catalog' && <CatalogView />}
             {activeModule === 'inventory' && <InventoryView onOpenTraceModal={(lot) => setTracingLot(lot)} />}
