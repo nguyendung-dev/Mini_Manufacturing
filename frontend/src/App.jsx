@@ -204,7 +204,7 @@ export default function App() {
       items: [
         {
           id: 'dashboard',
-          label: 'Bảng điều hành (Dashboard)',
+          label: 'Bảng điều hành',
           permKey: 'dashboard',
           breadcrumb: 'Tổng quan / Bảng điều hành sản xuất',
           icon: (
@@ -215,7 +215,7 @@ export default function App() {
         },
         {
           id: 'matrix',
-          label: 'Phân quyền người dùng (RBAC)',
+          label: 'Phân quyền (RBAC)',
           permKey: 'role_matrix',
           breadcrumb: 'Hệ thống / Ma trận phân quyền RBAC',
           icon: (
@@ -228,11 +228,11 @@ export default function App() {
     },
     {
       key: 'danhmuc',
-      title: '1. DỮ LIỆU GỐC & KỸ THUẬT',
+      title: '1. KỸ THUẬT & DANH MỤC',
       items: [
         {
           id: 'catalog',
-          label: 'Danh mục Vật tư, Kho & Đối tác',
+          label: 'Vật tư & Đối tác',
           permKey: 'catalog',
           breadcrumb: 'Danh mục / Khai báo vật tư NVL, BTP, TP, Kho và Đối tác',
           icon: (
@@ -243,7 +243,7 @@ export default function App() {
         },
         {
           id: 'boms',
-          label: 'Định mức kỹ thuật (BOM)',
+          label: 'Định mức BOM',
           permKey: 'boms',
           breadcrumb: 'Kỹ thuật / Định mức vật tư BOM & Tỷ lệ hao hụt',
           icon: (
@@ -256,11 +256,11 @@ export default function App() {
     },
     {
       key: 'kho_muahang',
-      title: '2. MUA HÀNG & KHO VẬN',
+      title: '2. MUA HÀNG & KHO',
       items: [
         {
           id: 'orders',
-          label: 'Mua hàng (PO) & Bán hàng (SO)',
+          label: 'Mua & Bán hàng',
           permKey: 'orders',
           breadcrumb: 'Thương mại / Đơn mua hàng PO & Đơn bán hàng SO',
           icon: (
@@ -271,7 +271,7 @@ export default function App() {
         },
         {
           id: 'inventory',
-          label: 'Sổ kho & Tồn theo lô',
+          label: 'Sổ kho & Số lô',
           permKey: 'inventory_view',
           breadcrumb: 'Kho vận / Quản lý xuất nhập tồn & Số lô vật tư',
           icon: (
@@ -288,7 +288,7 @@ export default function App() {
       items: [
         {
           id: 'production',
-          label: 'Lệnh sản xuất (LSX)',
+          label: 'Lệnh sản xuất',
           permKey: 'production_view',
           breadcrumb: 'Sản xuất / Điều độ & Thực hiện lệnh sản xuất',
           icon: (
@@ -305,7 +305,7 @@ export default function App() {
       items: [
         {
           id: 'finance',
-          label: 'Thu chi & Sổ quỹ nội bộ',
+          label: 'Thu chi & Sổ quỹ',
           permKey: 'finance',
           breadcrumb: 'Tài chính / Phiếu thu, phiếu chi & Dòng tiền',
           icon: (
@@ -316,7 +316,7 @@ export default function App() {
         },
         {
           id: 'costings',
-          label: 'Giá thành thực tế & Quyết toán',
+          label: 'Giá thành thực tế',
           permKey: 'costings',
           breadcrumb: 'Giá thành / Tập hợp chi phí thực tế & Chênh lệch BOM',
           icon: (
