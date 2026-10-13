@@ -361,7 +361,7 @@ export default function App() {
       {/* SIDEBAR BÊN TRÁI: Chuẩn shadcn/ui (Nền trắng, border-zinc-200, menu active zinc-900) */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-16 min-w-[64px] max-w-[64px]' : 'w-64 min-w-[245px] max-w-[245px]'
+          sidebarCollapsed ? 'w-16 min-w-[64px] max-w-[64px]' : 'w-64 min-w-[256px] max-w-[256px]'
         } bg-white text-zinc-900 flex flex-col flex-shrink-0 transition-all duration-150 select-none border-r border-zinc-200`}
       >
         {/* Brand Header */}
@@ -475,13 +475,13 @@ export default function App() {
                         key={item.id}
                         onClick={() => setActiveModule(item.id)}
                         title={item.label}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors ${
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-[14.5px] font-medium rounded-lg transition-colors ${
                           isActive
                             ? 'bg-zinc-900 text-zinc-50 shadow-sm font-semibold'
                             : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'
                         } ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
                       >
-                        <span className="flex-shrink-0 [&>svg]:w-4.5 [&>svg]:h-4.5">{item.icon}</span>
+                        <span className="flex-shrink-0 [&>svg]:w-5 [&>svg]:h-5">{item.icon}</span>
                         {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                       </button>
                     );
@@ -491,6 +491,7 @@ export default function App() {
             );
           })}
         </nav>
+
 
 
 
