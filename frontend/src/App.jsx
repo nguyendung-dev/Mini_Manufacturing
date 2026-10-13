@@ -148,8 +148,7 @@ export default function App() {
     setSearchDropdownOpen(false);
     setGlobalSearchQuery('');
     if (item.module === 'orders') {
-      setOrdersTab(item.tab || 'purchase');
-      setActiveModule('orders');
+      setActiveModule(item.tab === 'sales' ? 'sales' : 'purchase');
     } else if (item.module === 'production') {
       setTargetProductionId(item.targetId || item.code);
       setActiveModule('production');
@@ -168,8 +167,7 @@ export default function App() {
   const handleSelectNotification = (notif) => {
     setNotificationsOpen(false);
     if (notif.module === 'orders') {
-      setOrdersTab(notif.tab || 'purchase');
-      setActiveModule('orders');
+      setActiveModule(notif.tab === 'sales' ? 'sales' : 'purchase');
     } else if (notif.module === 'production') {
       if (notif.targetId) setTargetProductionId(notif.targetId);
       setActiveModule('production');
@@ -275,13 +273,24 @@ export default function App() {
       title: '2. MUA HÀNG & KHO',
       items: [
         {
-          id: 'orders',
-          label: 'Mua & Bán hàng',
+          id: 'purchase',
+          label: 'Mua hàng',
           permKey: 'orders',
-          breadcrumb: 'Thương mại / Đơn mua hàng PO & Đơn bán hàng SO',
+          breadcrumb: 'Mua hàng / Đơn mua hàng (PO) & Nhà cung cấp',
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          )
+        },
+        {
+          id: 'sales',
+          label: 'Bán hàng',
+          permKey: 'orders',
+          breadcrumb: 'Bán hàng / Đơn bán hàng (SO) & Khách hàng',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           )
         },
@@ -840,6 +849,8 @@ export default function App() {
                 targetOrderId={targetProductionId}
               />
             )}
+            {activeModule === 'purchase' && <OrdersView mode="purchase" />}
+            {activeModule === 'sales' && <OrdersView mode="sales" />}
             {activeModule === 'orders' && <OrdersView initialTab={ordersTab} />}
             {activeModule === 'finance' && <FinanceView />}
             {activeModule === 'costings' && <CostingView />}

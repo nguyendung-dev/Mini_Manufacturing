@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { fetchApi, formatMoney, formatNumber } from '../api';
 import { exportToExcel } from '../utils/excel';
 
-export default function OrdersView({ initialTab = 'purchase' }) {
-  const [tab, setTab] = useState(initialTab); // purchase | sales
+export default function OrdersView({ initialTab = 'purchase', mode }) {
+  const [tab, setTab] = useState(mode || initialTab); // purchase | sales
 
   useEffect(() => {
-    if (initialTab) {
+    if (mode) {
+      setTab(mode);
+    } else if (initialTab) {
       setTab(initialTab);
     }
-  }, [initialTab]);
+  }, [mode, initialTab]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [salesOrders, setSalesOrders] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -166,18 +168,22 @@ export default function OrdersView({ initialTab = 'purchase' }) {
 
   return (
     <div className="space-y-6">
-      {/* Header & Tabs */}
+      {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Đơn mua hàng (PO) & Đơn bán hàng (SO)</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {tab === 'purchase' ? 'Đơn mua hàng (PO)' : 'Đơn bán hàng (SO)'}
+          </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Quản lý đơn mua NVL từ NCC, đơn bán TP cho khách hàng và liên kết phiếu nhập/xuất kho
+            {tab === 'purchase'
+              ? 'Quản lý đơn mua NVL từ nhà cung cấp, chi phí mua hàng và nhập kho'
+              : 'Quản lý đơn bán thành phẩm cho khách hàng, tiến độ giao hàng và doanh thu'}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleExportOrdersExcel}
-            className="px-3.5 py-2 bg-emerald-700 text-white rounded font-medium hover:bg-emerald-800 shadow-sm text-sm flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-emerald-700 text-white rounded font-medium hover:bg-emerald-800 shadow-sm text-xs flex items-center gap-1.5 transition-colors"
             title="Xuất danh sách ra Excel (.xlsx)"
           >
             📊 Xuất Excel
@@ -194,32 +200,34 @@ export default function OrdersView({ initialTab = 'purchase' }) {
               });
               setShowCreateModal(true);
             }}
-            className="px-4 py-2 bg-blue-700 text-white rounded font-medium hover:bg-blue-800 shadow-sm text-sm"
+            className="px-4 py-2 bg-slate-900 text-white rounded-md font-medium hover:bg-slate-800 shadow-sm text-xs transition-colors"
           >
-            + Tạo {tab === 'purchase' ? 'Đơn mua hàng (PO)' : 'Đơn bán hàng (SO)'}
+            + Thêm mới
           </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 gap-6">
-        <button
-          onClick={() => setTab('purchase')}
-          className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
-            tab === 'purchase' ? 'border-blue-700 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Đơn mua hàng (PO)
-        </button>
-        <button
-          onClick={() => setTab('sales')}
-          className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
-            tab === 'sales' ? 'border-blue-700 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Đơn bán hàng (SO)
-        </button>
-      </div>
+      {/* Tabs (Chỉ hiển thị khi không ở chế độ mode đơn lẻ) */}
+      {!mode && (
+        <div className="flex border-b border-slate-200 gap-6">
+          <button
+            onClick={() => setTab('purchase')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
+              tab === 'purchase' ? 'border-blue-700 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Đơn mua hàng (PO)
+          </button>
+          <button
+            onClick={() => setTab('sales')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors ${
+              tab === 'sales' ? 'border-blue-700 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            Đơn bán hàng (SO)
+          </button>
+        </div>
+      )}
 
       {/* Bảng Đơn Mua Hàng */}
       {tab === 'purchase' && (
