@@ -65,7 +65,7 @@ export default function BomView() {
     }
   }, [selectedBom, planQty]);
 
-  // Mở modal nhập kho nhanh cho vật tư thiếu
+  // Mở modal nhập kho cho vật tư thiếu
   const handleOpenQuickStock = (req) => {
     const defaultWh = warehouses.find(w => 
       w.type === 'RAW' || 
@@ -86,22 +86,22 @@ export default function BomView() {
       shortage: req.shortage,
       qty: req.shortage,
       destWarehouseId: defaultWh,
-      lotNumber: `LOT-BUY-${todayStr}-${randomSuffix}`,
+      lotNumber: `LOT-${todayStr}-${randomSuffix}`,
       price: 0,
-      note: `Nhập bù vật tư thiếu theo kế hoạch BOM [${selectedBom?.code || ''}]`
+      note: `Nhập bổ sung theo BOM ${selectedBom?.code || ''}`
     });
   };
 
-  // Xác nhận nhập kho và ghi sổ tức thì
+  // Xác nhận nhập kho và ghi sổ
   const handleConfirmQuickStock = async (e) => {
     e.preventDefault();
     if (!quickStockModal) return;
     if (!quickStockModal.destWarehouseId) {
-      alert('Vui lòng chọn kho nhập đến!');
+      alert('Vui lòng chọn kho nhập.');
       return;
     }
     if (Number(quickStockModal.qty) <= 0) {
-      alert('Số lượng nhập kho phải lớn hơn 0!');
+      alert('Số lượng nhập phải lớn hơn 0.');
       return;
     }
 
@@ -123,10 +123,9 @@ export default function BomView() {
         })
       });
 
-      alert(`✅ Đã nhập kho thành công ${quickStockModal.qty} ${quickStockModal.unit} [${quickStockModal.itemName}]! Số dư tồn kho đã được cập nhật.`);
+      alert('Đã nhập kho thành công.');
       setQuickStockModal(null);
 
-      // Tự động tính lại nhu cầu vật tư MRP để cập nhật bảng ngay lập tức
       if (selectedBom) {
         handleCalculateRequirement(selectedBom.id, planQty);
       }
@@ -370,13 +369,12 @@ export default function BomView() {
                               {req.shortage > 0 ? `${formatNumber(req.shortage)} ${req.unit}` : '0'}
                             </td>
                             <td className="p-3 text-center">
-                              <span className={`px-3 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1.5 shadow-xs ${
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                 req.status === 'ĐỦ_HÀNG' 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  ? 'bg-slate-100 text-slate-700' 
+                                  : 'bg-red-50 text-red-700 border border-red-200'
                               }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${req.status === 'ĐỦ_HÀNG' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                                {req.status === 'ĐỦ_HÀNG' ? 'Đủ vật tư' : 'Thiếu hàng'}
+                                {req.status === 'ĐỦ_HÀNG' ? 'Đủ hàng' : 'Thiếu hàng'}
                               </span>
                             </td>
                             <td className="p-3 text-center">
@@ -384,15 +382,12 @@ export default function BomView() {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenQuickStock(req)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-semibold shadow-xs transition-colors hover:shadow"
-                                  title="Nhập thêm vật tư còn thiếu vào kho ngay"
+                                  className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors"
                                 >
-                                  <span>➕</span> Nhập kho nhanh
+                                  Nhập kho
                                 </button>
                               ) : (
-                                <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1">
-                                  <span>✓</span> Đã đủ
-                                </span>
+                                <span className="text-xs text-slate-400">-</span>
                               )}
                             </td>
                           </tr>
@@ -569,59 +564,56 @@ export default function BomView() {
         </div>
       )}
 
-      {/* Modal Nhập kho nhanh vật tư còn thiếu */}
+      {/* Modal Nhập kho vật tư */}
       {quickStockModal && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-start justify-between border-b pb-3">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-lg space-y-4">
+            <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <span className="p-1.5 bg-amber-100 text-amber-700 rounded-lg">⚡</span>
-                  Nhập kho nhanh vật tư còn thiếu
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Nhập kho vật tư
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Tạo và ghi sổ trực tiếp phiếu nhập mua để bổ sung vật tư cho kế hoạch sản xuất
+                  Nhập bổ sung số lượng vật tư còn thiếu vào kho.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setQuickStockModal(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+                className="text-slate-400 hover:text-slate-600 text-sm font-medium"
               >
                 ✕
               </button>
             </div>
 
-            {/* Thông tin vật tư cần nhập */}
-            <div className="p-3 bg-amber-50/70 border border-amber-200/70 rounded-lg flex items-center justify-between text-xs">
-              <div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs space-y-1.5">
+              <div className="flex justify-between">
                 <span className="text-slate-500">Mặt hàng:</span>
-                <div className="font-bold text-slate-800 text-sm mt-0.5">
-                  {quickStockModal.itemName}
-                </div>
-                <div className="font-mono text-slate-500 text-[11px]">{quickStockModal.itemCode}</div>
+                <span className="font-medium text-slate-800">{quickStockModal.itemName}</span>
               </div>
-              <div className="text-right">
-                <span className="text-rose-600 font-semibold">Cần bù thêm (Thiếu):</span>
-                <div className="text-base font-extrabold text-rose-600 mt-0.5">
-                  {formatNumber(quickStockModal.shortage)} {quickStockModal.unit}
-                </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Mã vật tư:</span>
+                <span className="font-mono text-slate-600">{quickStockModal.itemCode}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-slate-200">
+                <span className="text-slate-500">Số lượng thiếu:</span>
+                <span className="font-semibold text-red-600">{formatNumber(quickStockModal.shortage)} {quickStockModal.unit}</span>
               </div>
             </div>
 
-            <form onSubmit={handleConfirmQuickStock} className="space-y-4 text-xs">
+            <form onSubmit={handleConfirmQuickStock} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Kho nhập đến *</label>
+                <label className="block text-slate-700 font-medium mb-1">Kho nhập</label>
                 <select
                   required
                   value={quickStockModal.destWarehouseId}
                   onChange={(e) => setQuickStockModal({ ...quickStockModal, destWarehouseId: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-amber-500"
+                  className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   <option value="">-- Chọn kho nhập --</option>
                   {warehouses.map((wh) => (
                     <option key={wh.id} value={wh.id}>
-                      [{wh.code}] {wh.name} {wh.type ? `(${wh.type})` : ''}
+                      [{wh.code}] {wh.name}
                     </option>
                   ))}
                 </select>
@@ -629,8 +621,8 @@ export default function BomView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
-                    Số lượng nhập kho * ({quickStockModal.unit})
+                  <label className="block text-slate-700 font-medium mb-1">
+                    Số lượng ({quickStockModal.unit})
                   </label>
                   <input
                     type="number"
@@ -639,68 +631,60 @@ export default function BomView() {
                     required
                     value={quickStockModal.qty}
                     onChange={(e) => setQuickStockModal({ ...quickStockModal, qty: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-800 text-right focus:outline-none focus:border-amber-500"
+                    className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs font-semibold text-slate-800 text-right focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">
-                    Số lô (Lot number)
+                  <label className="block text-slate-700 font-medium mb-1">
+                    Số lô
                   </label>
                   <input
                     type="text"
                     value={quickStockModal.lotNumber}
                     onChange={(e) => setQuickStockModal({ ...quickStockModal, lotNumber: e.target.value })}
-                    placeholder="VD: LOT-2026-01"
-                    className="w-full border border-slate-300 rounded-lg p-2 text-xs font-mono focus:outline-none focus:border-amber-500"
+                    className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Đơn giá nhập dự tính (VNĐ)</label>
+                <label className="block text-slate-700 font-medium mb-1">Đơn giá (VNĐ)</label>
                 <input
                   type="number"
                   min="0"
                   step="any"
                   value={quickStockModal.price}
                   onChange={(e) => setQuickStockModal({ ...quickStockModal, price: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs text-right focus:outline-none focus:border-amber-500"
+                  className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs text-right text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Ghi chú phiếu nhập</label>
+                <label className="block text-slate-700 font-medium mb-1">Ghi chú</label>
                 <input
                   type="text"
                   value={quickStockModal.note}
                   onChange={(e) => setQuickStockModal({ ...quickStockModal, note: e.target.value })}
-                  placeholder="Ghi chú thêm..."
-                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-amber-500"
+                  className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setQuickStockModal(null)}
                   disabled={isSubmittingQuickStock}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="h-8 px-3 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                 >
-                  Đóng
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingQuickStock}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="h-8 px-3 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
-                  {isSubmittingQuickStock ? (
-                    <>Đang ghi sổ...</>
-                  ) : (
-                    <>
-                      <span>📥</span> Ghi sổ nhập kho ngay
-                    </>
-                  )}
+                  {isSubmittingQuickStock ? 'Đang lưu...' : 'Nhập kho'}
                 </button>
               </div>
             </form>
