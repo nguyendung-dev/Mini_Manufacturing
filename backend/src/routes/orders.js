@@ -169,7 +169,7 @@ router.get('/sales', async (req, res) => {
     const orders = await query(`
       SELECT so.*, p.name as partner_name, p.phone as partner_phone
       FROM sales_orders so
-      JOIN partners p ON so.partner_id = p.id
+      LEFT JOIN partners p ON so.partner_id = p.id
       ORDER BY so.date DESC, so.created_at DESC
     `);
 
@@ -180,8 +180,8 @@ router.get('/sales', async (req, res) => {
         SELECT soi.*, i.code as item_code, i.name as item_name, i.unit as item_unit
         FROM sales_order_items soi
         JOIN items i ON soi.item_id = i.id
-        WHERE相互: soi.order_id IN (${placeholders})
-      `.replace('相互: ', ''), orderIds);
+        WHERE soi.order_id IN (${placeholders})
+      `, orderIds);
 
       const itemsMap = {};
       items.forEach(it => {
