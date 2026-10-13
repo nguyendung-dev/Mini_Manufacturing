@@ -23,6 +23,7 @@ export default function App() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Profile modal states
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -433,21 +434,19 @@ export default function App() {
         <div className="p-3 border-t border-zinc-200 bg-white">
           {!sidebarCollapsed ? (
             <div className="flex items-center justify-between gap-2">
-              {/* Pill Dropdown Admin */}
-              <div className="relative flex-1 min-w-0">
+              {/* Pill Dropdown Admin: Gọn theo chữ, nền trắng, viền tinh tế */}
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-xs font-medium transition-all shadow-xs"
+                  className="inline-flex items-center gap-2 pl-1 pr-2.5 py-1 bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-200 rounded-full text-xs font-medium transition-all shadow-2xs group"
                   title="Thông tin tài khoản & hồ sơ"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-5 h-5 rounded-full bg-zinc-700 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">
-                      {currentUser.username ? currentUser.username[0].toUpperCase() : 'A'}
-                    </div>
-                    <span className="truncate text-xs font-semibold">{currentUser.username || 'admin'}</span>
+                  <div className="w-6 h-6 rounded-full bg-zinc-900 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+                    {currentUser.username ? currentUser.username[0].toUpperCase() : 'A'}
                   </div>
-                  <svg className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="text-xs font-semibold text-zinc-800">{currentUser.username || 'admin'}</span>
+                  <svg className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
