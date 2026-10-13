@@ -278,18 +278,32 @@ router.post('/sales/:id/deliver', async (req, res) => {
 
     for (const it of items) {
       const qty = Number(it.qty || 0);
-      const lot = it.lotNumber || 'LOT-TP-202610-01';
+      let lot = it.lotNumber;
 
-      // Kiểm tra tồn
-      const [stkRows] = await conn.query(`
-        SELECT quantity FROM stock 
+      // 1. Kiểm tra xem lô chỉ định có tồn không
+      let [stkRows] = await conn.query(`
+        SELECT lot_number, quantity FROM stock 
         WHERE warehouse_id = ? AND item_id = ? AND lot_number = ?
       `, [finalSourceWh, it.itemId, lot]);
+
+      // 2. Nếu lô chỉ định không có hoặc không đủ, tự động tìm lô có sẵn tồn kho của sản phẩm này trong kho TP
+      if (stkRows.length === 0 || Number(stkRows[0].quantity) < qty) {
+        const [anyLot] = await conn.query(`
+          SELECT lot_number, quantity FROM stock 
+          WHERE warehouse_id = ? AND item_id = ? AND quantity >= ?
+          ORDER BY quantity DESC LIMIT 1
+        `, [finalSourceWh, it.itemId, qty]);
+
+        if (anyLot.length > 0) {
+          lot = anyLot[0].lot_number;
+          stkRows = anyLot;
+        }
+      }
 
       const curQty = stkRows.length > 0 ? Number(stkRows[0].quantity) : 0;
       if (curQty < qty) {
         await conn.rollback();
-        return res.status(400).json({ error: `Tồn kho không đủ để xuất (Hiện có: ${curQty}, cần xuất: ${qty})` });
+        return res.status(400).json({ error: `Tồn kho không đủ để xuất (Hiện có: ${curQty}, cần xuất: ${qty}). Vui lòng hoàn thành Lệnh sản xuất để nhập bàn vào kho trước!` });
       }
 
       // Giảm kho
