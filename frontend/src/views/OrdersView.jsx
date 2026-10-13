@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { fetchApi, formatMoney, formatNumber } from '../api';
 import { exportToExcel } from '../utils/excel';
 
-export default function OrdersView() {
-  const [tab, setTab] = useState('purchase'); // purchase | sales
+export default function OrdersView({ initialTab = 'purchase' }) {
+  const [tab, setTab] = useState(initialTab); // purchase | sales
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [salesOrders, setSalesOrders] = useState([]);
   const [partners, setPartners] = useState([]);

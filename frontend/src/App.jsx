@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchApi } from './api';
 import DashboardView from './views/DashboardView';
 import CatalogView from './views/CatalogView';
 import InventoryView from './views/InventoryView';
@@ -12,6 +13,7 @@ import CostingView from './views/CostingView';
 import PermissionMatrixView from './views/PermissionMatrixView';
 import LoginView from './views/LoginView';
 import LotTraceModal from './components/LotTraceModal';
+import UserProfileModal from './components/UserProfileModal';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,9 +21,29 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [tracingLot, setTracingLot] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+
+  // Profile modal states
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileInitialTab, setProfileInitialTab] = useState('profile');
+
+  // Global Search states
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const searchContainerRef = useRef(null);
+
+  // Notification states
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsList, setNotificationsList] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifContainerRef = useRef(null);
+
+  // Target navigation states
+  const [ordersTab, setOrdersTab] = useState('purchase');
+  const [targetProductionId, setTargetProductionId] = useState(null);
 
   // Đọc phiên đăng nhập từ localStorage khi mở web
   useEffect(() => {
@@ -38,6 +60,117 @@ export default function App() {
       setInitialLoading(false);
     }
   }, []);
+
+  // Tải danh sách thông báo xưởng
+  const loadNotifications = async () => {
+    try {
+      const data = await fetchApi('/reports/notifications');
+      if (Array.isArray(data)) {
+        setNotificationsList(data);
+        setUnreadCount(data.length);
+      }
+    } catch (e) {
+      console.error('Lỗi tải thông báo:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 45000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+  // Phím tắt Ctrl+K để mở thanh tìm kiếm & Phím Esc để đóng popups
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const input = document.getElementById('global-header-search');
+        if (input) input.focus();
+      }
+      if (e.key === 'Escape') {
+        setSearchDropdownOpen(false);
+        setNotificationsOpen(false);
+        setUserDropdownOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Lắng nghe click bên ngoài để đóng dropdowns
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setSearchDropdownOpen(false);
+      }
+      if (notifContainerRef.current && !notifContainerRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced Search API query
+  useEffect(() => {
+    if (!globalSearchQuery || globalSearchQuery.trim().length === 0) {
+      setSearchResults([]);
+      setSearchDropdownOpen(false);
+      return;
+    }
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetchApi(`/reports/global-search?q=${encodeURIComponent(globalSearchQuery.trim())}`);
+        setSearchResults(Array.isArray(res) ? res : []);
+        setSearchDropdownOpen(true);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [globalSearchQuery]);
+
+  // Điều hướng khi click vào kết quả tìm kiếm
+  const handleSelectSearchResult = (item) => {
+    setSearchDropdownOpen(false);
+    setGlobalSearchQuery('');
+    if (item.module === 'orders') {
+      setOrdersTab(item.tab || 'purchase');
+      setActiveModule('orders');
+    } else if (item.module === 'production') {
+      setTargetProductionId(item.targetId || item.code);
+      setActiveModule('production');
+    } else if (item.module === 'inventory') {
+      if (item.lotNumber) {
+        setTracingLot(item.lotNumber);
+      } else {
+        setActiveModule('inventory');
+      }
+    } else {
+      setActiveModule(item.module);
+    }
+  };
+
+  // Điều hướng khi click thông báo
+  const handleSelectNotification = (notif) => {
+    setNotificationsOpen(false);
+    if (notif.module === 'orders') {
+      setOrdersTab(notif.tab || 'purchase');
+      setActiveModule('orders');
+    } else if (notif.module === 'production') {
+      if (notif.targetId) setTargetProductionId(notif.targetId);
+      setActiveModule('production');
+    } else if (notif.module === 'inventory') {
+      setActiveModule('inventory');
+    }
+  };
 
   const handleLoginSuccess = (user, perms) => {
     setCurrentUser(user);
@@ -306,7 +439,7 @@ export default function App() {
                   type="button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="w-full flex items-center justify-between gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-xs font-medium transition-all shadow-xs"
-                  title="Thông tin tài khoản"
+                  title="Thông tin tài khoản & hồ sơ"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-5 h-5 rounded-full bg-zinc-700 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">
@@ -319,23 +452,92 @@ export default function App() {
                   </svg>
                 </button>
 
-                {/* Dropdown Popup Đăng xuất */}
+                {/* Dropdown Popup Hồ sơ & Tài khoản đầy đủ */}
                 {userDropdownOpen && (
-                  <div className="absolute left-0 bottom-full mb-2 w-56 bg-white border border-zinc-200 rounded-lg shadow-xl p-1.5 z-50">
-                    <div className="px-3 py-2 border-b border-zinc-100 text-xs">
-                      <div className="font-semibold text-zinc-900">{currentUser.full_name || 'Quản trị viên'}</div>
-                      <div className="text-[11px] text-zinc-500 font-mono">@{currentUser.username} • {currentUser.role}</div>
+                  <div className="absolute left-0 bottom-full mb-2 w-64 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    {/* Header thông tin người dùng */}
+                    <div className="px-3 py-2.5 border-b border-zinc-100 bg-zinc-50/70 rounded-lg mb-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-zinc-900 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+                          {currentUser.username ? currentUser.username[0].toUpperCase() : 'A'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-xs text-zinc-900 truncate">
+                            {currentUser.full_name || 'Nguyễn Văn Quản Trị'}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 font-mono truncate">
+                            @{currentUser.username || 'admin'} • {currentUser.role || 'ADMIN'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-zinc-200/60 flex items-center justify-between text-[10px] text-zinc-500">
+                        <span>Phòng: Ban Điều Hành</span>
+                        <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Online
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2 font-medium transition-colors mt-1"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Đăng xuất hệ thống
-                    </button>
+
+                    {/* Danh sách mục thao tác hồ sơ */}
+                    <div className="space-y-0.5 text-xs font-medium text-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileModal(true);
+                          setProfileInitialTab('profile');
+                          setUserDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 hover:bg-zinc-100 rounded-md flex items-center gap-2 transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Hồ sơ tài khoản & Cá nhân</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileModal(true);
+                          setProfileInitialTab('security');
+                          setUserDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 hover:bg-zinc-100 rounded-md flex items-center gap-2 transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Đổi mật khẩu bảo vệ</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveModule('matrix');
+                          setUserDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 hover:bg-zinc-100 rounded-md flex items-center gap-2 transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Phân quyền người dùng (RBAC)</span>
+                      </button>
+                    </div>
+
+                    <div className="border-t border-zinc-100 my-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2 font-medium transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Đăng xuất hệ thống
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -382,29 +584,175 @@ export default function App() {
       {/* KHU VỰC CHÍNH BÊN PHẢI */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* HEADER TRÊN CÙNG: Nền trắng tinh khiết, chuẩn shadcn/ui */}
-        <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-6 z-10 flex-shrink-0">
-          {/* Nút Toggle [|] + Breadcrumb vị trí hiện tại */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-md border border-zinc-200 transition-colors"
-              title={sidebarCollapsed ? "Mở rộng thanh menu" : "Thu gọn thanh menu"}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M9 3v18" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-              <span className="text-zinc-400 font-normal">Hệ thống /</span>
-              <span className="text-zinc-900 font-semibold">{currentBreadcrumb}</span>
-            </div>
+        <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-6 z-10 flex-shrink-0 gap-4">
+          {/* Vị trí breadcrumb (Đã xóa nút [|] thừa trên header theo yêu cầu người dùng) */}
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 flex-shrink-0">
+            <span className="text-zinc-400 font-normal">Hệ thống /</span>
+            <span className="text-zinc-900 font-semibold">{currentBreadcrumb}</span>
           </div>
 
-          {/* Góc phải: Trạng thái hệ thống */}
-          <div className="flex items-center gap-3 text-xs">
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5">
+          {/* THANH TÌM KIẾM TOÀN HỆ THỐNG THEO MÃ (PO, SO, LSX, BOM, LÔ, VẬT TƯ) */}
+          <div className="relative flex-1 max-w-md mx-2" ref={searchContainerRef}>
+            <div className="relative flex items-center">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                id="global-header-search"
+                type="text"
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                onFocus={() => { if (searchResults.length > 0) setSearchDropdownOpen(true); }}
+                placeholder="Tìm nhanh mã (PO, SO, LSX, BOM, Lô, Vật tư)..."
+                className="w-full pl-9 pr-14 py-1.5 bg-zinc-100/90 hover:bg-zinc-100 focus:bg-white text-zinc-900 placeholder:text-zinc-400 text-xs rounded-lg border border-zinc-200 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition-all shadow-2xs"
+              />
+              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1">
+                {globalSearchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => { setGlobalSearchQuery(''); setSearchDropdownOpen(false); }}
+                    className="text-zinc-400 hover:text-zinc-600 p-0.5 rounded"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ) : (
+                  <span className="hidden sm:inline-flex items-center text-[10px] font-mono text-zinc-400 bg-white border border-zinc-200 px-1.5 py-0.5 rounded shadow-2xs">
+                    Ctrl K
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Dropdown Kết Quả Tìm Kiếm Theo Mã */}
+            {searchDropdownOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-50 max-h-96 overflow-y-auto animate-in fade-in duration-100">
+                {isSearching ? (
+                  <div className="p-4 text-center text-xs text-zinc-500">
+                    Đang tìm kiếm mã liên quan...
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-1">
+                    <div className="px-2 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                      Kết quả tìm kiếm ({searchResults.length})
+                    </div>
+                    {searchResults.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectSearchResult(item)}
+                        className="w-full text-left p-2 rounded-lg hover:bg-zinc-100 flex items-start justify-between gap-3 transition-colors group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${item.badgeColor}`}>
+                              {item.badge}
+                            </span>
+                            <span className="font-bold text-xs text-zinc-900 group-hover:text-blue-600 font-mono">
+                              {item.title}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-zinc-500 truncate mt-0.5">
+                            {item.subtitle}
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-zinc-400 flex items-center gap-1 group-hover:text-zinc-800 flex-shrink-0 pt-0.5 font-medium">
+                          <span>Xem chi tiết</span>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-xs text-zinc-500">
+                    Không tìm thấy chứng từ hoặc mã nào khớp với "{globalSearchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* KHU VỰC THÔNG BÁO VÀ TRẠNG THÁI XƯỞNG */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Nút Chuông Thông Báo */}
+            <div className="relative" ref={notifContainerRef}>
+              <button
+                type="button"
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative p-2 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-full transition-colors border border-zinc-200"
+                title="Trung tâm thông báo & Cảnh báo xưởng"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Popover Danh sách thông báo */}
+              {notificationsOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-zinc-200 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in duration-100">
+                  <div className="px-3 py-2 border-b border-zinc-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-zinc-900">Thông báo & Cảnh báo</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
+                        {unreadCount} mới
+                      </span>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setUnreadCount(0)}
+                        className="text-[11px] text-zinc-500 hover:text-zinc-800 transition-colors font-medium"
+                      >
+                        Đánh dấu đã đọc
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-zinc-100 text-xs">
+                    {notificationsList.length > 0 ? (
+                      notificationsList.map((notif) => (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          onClick={() => handleSelectNotification(notif)}
+                          className="w-full text-left p-3 hover:bg-zinc-50 transition-colors flex items-start gap-2.5 group"
+                        >
+                          <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                            notif.level === 'warning' ? 'bg-amber-500 ring-2 ring-amber-100' : 'bg-blue-500 ring-2 ring-blue-100'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-zinc-900 group-hover:text-blue-600 flex items-center justify-between">
+                              <span className="truncate">{notif.title}</span>
+                              <span className="text-[10px] text-zinc-400 font-normal flex-shrink-0">{notif.time}</span>
+                            </div>
+                            <p className="text-[11px] text-zinc-600 mt-0.5 leading-snug">
+                              {notif.message}
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-6 text-center text-zinc-500">
+                        Hiện không có cảnh báo nào cần xử lý.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Trạng thái xưởng */}
+            <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5 flex-shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Xưởng gỗ hoạt động
             </span>
@@ -418,8 +766,13 @@ export default function App() {
             {activeModule === 'catalog' && <CatalogView />}
             {activeModule === 'inventory' && <InventoryView onOpenTraceModal={(lot) => setTracingLot(lot)} />}
             {activeModule === 'boms' && <BomView />}
-            {activeModule === 'production' && <ProductionView onOpenTraceModal={(lot) => setTracingLot(lot)} />}
-            {activeModule === 'orders' && <OrdersView />}
+            {activeModule === 'production' && (
+              <ProductionView
+                onOpenTraceModal={(lot) => setTracingLot(lot)}
+                targetOrderId={targetProductionId}
+              />
+            )}
+            {activeModule === 'orders' && <OrdersView initialTab={ordersTab} />}
             {activeModule === 'finance' && <FinanceView />}
             {activeModule === 'costings' && <CostingView />}
             {activeModule === 'matrix' && <PermissionMatrixView />}
@@ -434,6 +787,19 @@ export default function App() {
           onClose={() => setTracingLot(null)}
         />
       )}
+
+      {/* Modal Thông tin Tài khoản & Hồ sơ cá nhân */}
+      {showProfileModal && (
+        <UserProfileModal
+          currentUser={currentUser}
+          onClose={() => setShowProfileModal(false)}
+          onUpdateUser={(updated) => {
+            setCurrentUser(updated);
+            localStorage.setItem('erp_user', JSON.stringify(updated));
+          }}
+        />
+      )}
     </div>
   );
 }
+
