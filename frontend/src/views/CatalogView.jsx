@@ -507,7 +507,7 @@ export default function CatalogView() {
                     <input
                       type="text"
                       required
-                      placeholder="VD: NVL-THEP-01"
+                      placeholder="VD: NVL-GO-01"
                       value={itemForm.code}
                       onChange={e => setItemForm({ ...itemForm, code: e.target.value })}
                       className="w-full text-sm border p-2 rounded focus:outline-none"
@@ -532,7 +532,7 @@ export default function CatalogView() {
                   <input
                     type="text"
                     required
-                    placeholder="VD: Thép tấm cán nóng SS400"
+                    placeholder="VD: Gỗ Sồi Trắng Xẻ Sấy 4/4"
                     value={itemForm.name}
                     onChange={e => setItemForm({ ...itemForm, name: e.target.value })}
                     className="w-full text-sm border p-2 rounded focus:outline-none"

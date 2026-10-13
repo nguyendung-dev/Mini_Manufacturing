@@ -4,10 +4,15 @@ import { fetchApi, formatMoney, formatNumber } from '../api';
 export default function BomView() {
   const [boms, setBoms] = useState([]);
   const [items, setItems] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
   const [selectedBom, setSelectedBom] = useState(null);
   const [planQty, setPlanQty] = useState(10);
   const [mrpResult, setMrpResult] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Quick Stock-in modal state
+  const [quickStockModal, setQuickStockModal] = useState(null);
+  const [isSubmittingQuickStock, setIsSubmittingQuickStock] = useState(false);
 
   // Form tạo BOM
   const [bomForm, setBomForm] = useState({
@@ -29,6 +34,9 @@ export default function BomView() {
       }
       const itms = await fetchApi('/catalog/items');
       setItems(itms);
+
+      const whs = await fetchApi('/catalog/warehouses');
+      setWarehouses(whs || []);
     } catch (err) {
       console.error(err);
     }
@@ -56,6 +64,78 @@ export default function BomView() {
       handleCalculateRequirement(selectedBom.id, planQty);
     }
   }, [selectedBom, planQty]);
+
+  // Mở modal nhập kho nhanh cho vật tư thiếu
+  const handleOpenQuickStock = (req) => {
+    const defaultWh = warehouses.find(w => 
+      w.type === 'RAW' || 
+      w.id?.includes('NVL') || 
+      w.name?.toLowerCase().includes('nguyên vật liệu') || 
+      w.name?.toLowerCase().includes('vật tư') ||
+      w.name?.toLowerCase().includes('gỗ')
+    )?.id || warehouses[0]?.id || '';
+
+    const todayStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+
+    setQuickStockModal({
+      itemId: req.itemId,
+      itemName: req.itemName,
+      itemCode: req.itemCode,
+      unit: req.unit,
+      shortage: req.shortage,
+      qty: req.shortage,
+      destWarehouseId: defaultWh,
+      lotNumber: `LOT-BUY-${todayStr}-${randomSuffix}`,
+      price: 0,
+      note: `Nhập bù vật tư thiếu theo kế hoạch BOM [${selectedBom?.code || ''}]`
+    });
+  };
+
+  // Xác nhận nhập kho và ghi sổ tức thì
+  const handleConfirmQuickStock = async (e) => {
+    e.preventDefault();
+    if (!quickStockModal) return;
+    if (!quickStockModal.destWarehouseId) {
+      alert('Vui lòng chọn kho nhập đến!');
+      return;
+    }
+    if (Number(quickStockModal.qty) <= 0) {
+      alert('Số lượng nhập kho phải lớn hơn 0!');
+      return;
+    }
+
+    setIsSubmittingQuickStock(true);
+    try {
+      await fetchApi('/inventory/transactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'IN_PURCHASE',
+          status: 'POSTED',
+          dest_warehouse_id: quickStockModal.destWarehouseId,
+          note: quickStockModal.note,
+          items: [{
+            item_id: quickStockModal.itemId,
+            lot_number: quickStockModal.lotNumber || 'LOT-AUTO',
+            qty: Number(quickStockModal.qty),
+            price: Number(quickStockModal.price || 0)
+          }]
+        })
+      });
+
+      alert(`✅ Đã nhập kho thành công ${quickStockModal.qty} ${quickStockModal.unit} [${quickStockModal.itemName}]! Số dư tồn kho đã được cập nhật.`);
+      setQuickStockModal(null);
+
+      // Tự động tính lại nhu cầu vật tư MRP để cập nhật bảng ngay lập tức
+      if (selectedBom) {
+        handleCalculateRequirement(selectedBom.id, planQty);
+      }
+    } catch (err) {
+      alert('Lỗi nhập kho: ' + (err.message || 'Không thể tạo phiếu nhập'));
+    } finally {
+      setIsSubmittingQuickStock(false);
+    }
+  };
 
   const addCompLine = () => {
     setBomForm({
@@ -267,6 +347,7 @@ export default function BomView() {
                           <th className="p-3 text-right">Tồn kho hiện có</th>
                           <th className="p-3 text-right">Cần mua thêm (Thiếu)</th>
                           <th className="p-3 text-center">Trạng thái</th>
+                          <th className="p-3 text-center">Thao tác</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -297,6 +378,22 @@ export default function BomView() {
                                 <span className={`w-1.5 h-1.5 rounded-full ${req.status === 'ĐỦ_HÀNG' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
                                 {req.status === 'ĐỦ_HÀNG' ? 'Đủ vật tư' : 'Thiếu hàng'}
                               </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              {req.shortage > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenQuickStock(req)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-semibold shadow-xs transition-colors hover:shadow"
+                                  title="Nhập thêm vật tư còn thiếu vào kho ngay"
+                                >
+                                  <span>➕</span> Nhập kho nhanh
+                                </button>
+                              ) : (
+                                <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1">
+                                  <span>✓</span> Đã đủ
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -465,6 +562,145 @@ export default function BomView() {
                   className="px-4 py-2 bg-blue-700 text-white rounded text-sm font-semibold hover:bg-blue-800"
                 >
                   Lưu định mức BOM
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nhập kho nhanh vật tư còn thiếu */}
+      {quickStockModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-start justify-between border-b pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                  <span className="p-1.5 bg-amber-100 text-amber-700 rounded-lg">⚡</span>
+                  Nhập kho nhanh vật tư còn thiếu
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tạo và ghi sổ trực tiếp phiếu nhập mua để bổ sung vật tư cho kế hoạch sản xuất
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickStockModal(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Thông tin vật tư cần nhập */}
+            <div className="p-3 bg-amber-50/70 border border-amber-200/70 rounded-lg flex items-center justify-between text-xs">
+              <div>
+                <span className="text-slate-500">Mặt hàng:</span>
+                <div className="font-bold text-slate-800 text-sm mt-0.5">
+                  {quickStockModal.itemName}
+                </div>
+                <div className="font-mono text-slate-500 text-[11px]">{quickStockModal.itemCode}</div>
+              </div>
+              <div className="text-right">
+                <span className="text-rose-600 font-semibold">Cần bù thêm (Thiếu):</span>
+                <div className="text-base font-extrabold text-rose-600 mt-0.5">
+                  {formatNumber(quickStockModal.shortage)} {quickStockModal.unit}
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmQuickStock} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Kho nhập đến *</label>
+                <select
+                  required
+                  value={quickStockModal.destWarehouseId}
+                  onChange={(e) => setQuickStockModal({ ...quickStockModal, destWarehouseId: e.target.value })}
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-amber-500"
+                >
+                  <option value="">-- Chọn kho nhập --</option>
+                  {warehouses.map((wh) => (
+                    <option key={wh.id} value={wh.id}>
+                      [{wh.code}] {wh.name} {wh.type ? `(${wh.type})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Số lượng nhập kho * ({quickStockModal.unit})
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0.001"
+                    required
+                    value={quickStockModal.qty}
+                    onChange={(e) => setQuickStockModal({ ...quickStockModal, qty: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-800 text-right focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Số lô (Lot number)
+                  </label>
+                  <input
+                    type="text"
+                    value={quickStockModal.lotNumber}
+                    onChange={(e) => setQuickStockModal({ ...quickStockModal, lotNumber: e.target.value })}
+                    placeholder="VD: LOT-2026-01"
+                    className="w-full border border-slate-300 rounded-lg p-2 text-xs font-mono focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Đơn giá nhập dự tính (VNĐ)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={quickStockModal.price}
+                  onChange={(e) => setQuickStockModal({ ...quickStockModal, price: e.target.value })}
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs text-right focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Ghi chú phiếu nhập</label>
+                <input
+                  type="text"
+                  value={quickStockModal.note}
+                  onChange={(e) => setQuickStockModal({ ...quickStockModal, note: e.target.value })}
+                  placeholder="Ghi chú thêm..."
+                  className="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setQuickStockModal(null)}
+                  disabled={isSubmittingQuickStock}
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingQuickStock}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isSubmittingQuickStock ? (
+                    <>Đang ghi sổ...</>
+                  ) : (
+                    <>
+                      <span>📥</span> Ghi sổ nhập kho ngay
+                    </>
+                  )}
                 </button>
               </div>
             </form>
