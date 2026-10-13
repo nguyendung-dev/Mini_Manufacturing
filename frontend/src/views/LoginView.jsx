@@ -6,7 +6,6 @@ export default function LoginView({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [branch, setBranch] = useState('factory_hn');
 
   // Form đăng nhập
   const [loginData, setLoginData] = useState({
@@ -85,17 +84,14 @@ export default function LoginView({ onLoginSuccess }) {
       {/* Khối Card phong cách shadcn/ui (Authentication-01) */}
       <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-sm">
         
-        {/* Header với Logo chính thức */}
+        {/* Header với Tiêu đề QL Xưởng Gỗ */}
         <div className="text-center mb-6">
-          <div className="h-12 flex items-center justify-center mx-auto mb-3">
-            <img src="/logo.png" alt="HT softtech" className="h-10 object-contain" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
-            {!isRegister ? 'Đăng nhập HT softtech' : 'Tạo tài khoản mới'}
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-950">
+            {!isRegister ? 'QL Xưởng Gỗ' : 'Tạo tài khoản mới'}
           </h1>
           <p className="text-xs text-zinc-500 mt-1">
             {!isRegister
-              ? 'Hệ thống Quản trị Sản xuất & Kho Xưởng Gỗ HT softtech ERP'
+              ? 'Hệ thống Quản trị Sản xuất & Kho'
               : 'Đăng ký tài khoản phân quyền làm việc nội bộ'}
           </p>
         </div>
@@ -110,20 +106,6 @@ export default function LoginView({ onLoginSuccess }) {
         {!isRegister ? (
           /* FORM ĐĂNG NHẬP */
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-zinc-900 mb-1.5 block">
-                Nhà máy / Phân xưởng
-              </label>
-              <select
-                value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-                className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 cursor-pointer"
-              >
-                <option value="factory_wood">Xưởng Sản Xuất Nội Thất Gỗ HT softtech (Thạch Thất)</option>
-                <option value="warehouse_central">Kho Gỗ Khối, Ván MDF & Phụ Kiện Mộc</option>
-              </select>
-            </div>
-
             <div>
               <label className="text-xs font-medium text-zinc-900 mb-1.5 block">
                 Tài khoản / Mã nhân viên

@@ -336,7 +336,7 @@ export default function App() {
   if (initialLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-300 text-sm">
-        Đang khởi động phần mềm HT softtech ERP...
+        Đang khởi động phần mềm QL Xưởng Gỗ...
       </div>
     );
   }
@@ -367,16 +367,16 @@ export default function App() {
         {/* Brand Header */}
         <div className="h-14 flex items-center px-4 border-b border-zinc-200 bg-white">
           <div className="flex items-center gap-3 overflow-hidden w-full">
-            <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-white">
-              <img src="/logo.png" alt="HT softtech" className="w-8 h-8 object-contain" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-zinc-900 text-white font-bold text-xs tracking-wider shadow-xs">
+              QL
             </div>
             {!sidebarCollapsed && (
               <div className="leading-tight truncate flex-1">
                 <div className="font-bold text-sm text-zinc-950 tracking-tight truncate">
-                  HT softtech ERP
+                  QL Xưởng Gỗ
                 </div>
                 <div className="text-[11px] text-zinc-500 font-normal truncate">
-                  Quản Trị Xưởng Gỗ
+                  Quản Trị Sản Xuất & Kho
                 </div>
               </div>
             )}
