@@ -749,12 +749,6 @@ export default function App() {
                 </div>
               )}
             </div>
-
-            {/* Trạng thái xưởng */}
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5 flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Xưởng gỗ hoạt động
-            </span>
           </div>
         </header>
 
