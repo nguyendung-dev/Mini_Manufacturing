@@ -5,7 +5,7 @@ const { query, getConnection } = require('../db');
 // Lấy danh sách tồn kho chi tiết theo kho, mặt hàng và số lô
 router.get('/stock', async (req, res) => {
   try {
-    const { warehouseId, itemId, search, type } = req.query;
+    const { warehouseId, itemId, search, type, warehouseType } = req.query;
     let sql = `
       SELECT s.*, 
              i.code as item_code, i.name as item_name, i.unit as item_unit, i.type as item_type, i.cost_price,
@@ -21,6 +21,10 @@ router.get('/stock', async (req, res) => {
     if (warehouseId) {
       sql += ' AND s.warehouse_id = ?';
       params.push(warehouseId);
+    }
+    if (warehouseType) {
+      sql += ' AND w.type = ?';
+      params.push(warehouseType);
     }
     if (itemId) {
       sql += ' AND s.item_id = ?';

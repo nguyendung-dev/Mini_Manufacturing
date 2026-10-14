@@ -63,6 +63,18 @@ export default function App() {
     }
   }, []);
 
+  // Tự động thu gọn menu sidebar khi mở trên màn hình nhỏ / tablet / mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Tải danh sách thông báo xưởng
   const loadNotifications = async () => {
     try {
@@ -669,17 +681,28 @@ export default function App() {
       {/* KHU VỰC CHÍNH BÊN PHẢI */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* HEADER TRÊN CÙNG: Nền trắng tinh khiết, chuẩn shadcn/ui */}
-        <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-6 z-10 flex-shrink-0 gap-4">
-          {/* Vị trí breadcrumb bên trái */}
-          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 flex-shrink-0">
-            <span className="text-zinc-400 font-normal">Hệ thống /</span>
-            <span className="text-zinc-900 font-semibold">{currentBreadcrumb}</span>
+        <header className="h-14 bg-white/95 backdrop-blur border-b border-zinc-200 flex items-center justify-between px-3 sm:px-6 z-10 flex-shrink-0 gap-2 sm:gap-4">
+          {/* Vị trí breadcrumb bên trái kèm nút toggle menu */}
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 min-w-0 flex-shrink">
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 rounded-md border border-zinc-200 transition-colors flex-shrink-0"
+              title="Đóng / Mở menu thanh bên"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M9 3v18" />
+              </svg>
+            </button>
+            <span className="text-zinc-400 font-normal hidden md:inline">Hệ thống /</span>
+            <span className="text-zinc-900 font-semibold truncate max-w-[140px] sm:max-w-[220px] md:max-w-none">{currentBreadcrumb}</span>
           </div>
 
           {/* KHU VỰC BÊN PHẢI: THANH TÌM KIẾM MÃ SÍT CẠNH NÚT THÔNG BÁO */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
-            {/* Thanh Tìm Kiếm Mã Toàn Hệ Thống (Không phím tắt) */}
-            <div className="relative w-64 sm:w-80" ref={searchContainerRef}>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Thanh Tìm Kiếm Mã Toàn Hệ Thống */}
+            <div className="relative w-40 sm:w-64 md:w-80" ref={searchContainerRef}>
               <div className="relative flex items-center">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
